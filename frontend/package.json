@@ -3,6 +3,26 @@
   "version": "0.1.0",
   "description": "Frontend moderno para Alohopass - Gestor de contraseñas seguro",
   "type": "module",
+  "author": {
+    "name": "n3c4s",
+    "email": "n3c4s@github.com",
+    "url": "https://github.com/n3c4s"
+  },
+  "homepage": "https://alohopass.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/n3c4s/alohomora.git"
+  },
+  "keywords": [
+    "password-manager",
+    "security",
+    "encryption",
+    "tauri",
+    "rust",
+    "react",
+    "typescript"
+  ],
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

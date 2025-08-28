@@ -1,11 +1,13 @@
 [package]
 name = "alohopass"
 version = "0.1.0"
-edition = "2021"
-authors = ["Tu Nombre <tu@email.com>"]
-description = "Un gestor de contraseñas seguro y moderno inspirado en Alohomora"
+edition = "2025"
+authors = ["Charly <charly@alohopass.com>"]
+description = "Un gestor de contraseñas seguro y moderno inspirado en el encantamiento Alohomora"
 license = "MIT"
-repository = "https://github.com/tuusuario/alohopass"
+repository = "https://github.com/n3c4s/alohomora"
+homepage = "https://alohopass.com"
+keywords = ["password-manager", "security", "encryption", "tauri", "rust"]
 
 [dependencies]
 # Tauri

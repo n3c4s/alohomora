@@ -372,8 +372,8 @@ Este proyecto está licenciado bajo la **MIT License** - ver el archivo [LICENSE
 - 📧 **Email** - Contacto directo para consultas privadas
 
 ### **Recursos Adicionales**
-- 🔗 **Sitio web oficial** - [alohopass.dev](https://alohopass.dev)
-- 📚 **Documentación completa** - [docs.alohopass.dev](https://docs.alohopass.dev)
+- 🔗 **Sitio web oficial** - [alohopass.com](https://alohopass.com)
+- 📚 **Documentación completa** - [docs.alohopass.com](https://docs.alohopass.com)
 - 🎥 **Tutoriales en video** - [YouTube](https://youtube.com/@alohopass)
 
 ## 🗺️ Roadmap
@@ -408,6 +408,15 @@ Este proyecto está licenciado bajo la **MIT License** - ver el archivo [LICENSE
 - 🔌 API para desarrolladores
 - 🎯 Modo empresarial con gestión de equipos
 
+## 👨‍💻 Autor
+
+**Alohopass** es desarrollado y mantenido por [@n3c4s](https://github.com/n3c4s).
+
+- 🌐 **Sitio web:** [alohopass.com](https://alohopass.com)
+- 📧 **Contacto:** [n3c4s@github.com](mailto:n3c4s@github.com)
+- 🐛 **Issues:** [GitHub Issues](https://github.com/n3c4s/alohomora/issues)
+- 💬 **Discusiones:** [GitHub Discussions](https://github.com/n3c4s/alohomora/discussions)
+
 ---
 
 ## 🎯 **¡Comienza a usar Alohopass hoy mismo!**
@@ -420,4 +429,4 @@ Este proyecto está licenciado bajo la **MIT License** - ver el archivo [LICENSE
 
 ---
 
-*Desarrollado con ❤️ y 🦀 por la comunidad Alohopass* 
+*Desarrollado con ❤️ y 🦀 por [@n3c4s](https://github.com/n3c4s) y la comunidad Alohopass* 

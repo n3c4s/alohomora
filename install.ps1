@@ -2,6 +2,7 @@
 # Ejecutar como administrador en PowerShell
 
 Write-Host "Instalando Alohopass - Gestor de Contraseñas Seguro" -ForegroundColor Green
+Write-Host "Desarrollado por @n3c4s - alohopass.com" -ForegroundColor Cyan
 Write-Host "==================================================" -ForegroundColor Green
 
 # Función para verificar si un comando existe

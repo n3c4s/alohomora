@@ -19,6 +19,7 @@ NC = \033[0m # No Color
 
 help: ## Mostrar esta ayuda
 	@echo "$(GREEN)Alohopass - Gestor de Contraseñas Seguro$(NC)"
+@echo "$(CYAN)Desarrollado por @n3c4s - $(NC)$(YELLOW)alohopass.com$(NC)"
 	@echo "$(BLUE)Comandos disponibles:$(NC)"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(YELLOW)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
