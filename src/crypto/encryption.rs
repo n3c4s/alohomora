@@ -1,39 +1,32 @@
-use aes_gcm::{Aes256Gcm, Key, Nonce};
-use aes_gcm::aead::{Aead, NewAead};
-use rand::{Rng, RngCore};
+use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce, KeyInit};
+use chacha20poly1305::aead::Aead;
+use rand::RngCore;
 use anyhow::{Result, anyhow};
 
-pub struct EncryptionEngine {
-    cipher: Aes256Gcm,
+pub fn encrypt_data(data: &[u8], key: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
+    let key = Key::from_slice(key);
+    let cipher = ChaCha20Poly1305::new(key);
+    
+    let mut nonce_bytes = [0u8; 12];
+    rand::thread_rng().fill_bytes(&mut nonce_bytes);
+    let nonce = Nonce::from_slice(&nonce_bytes);
+    
+    let ciphertext = cipher.encrypt(nonce, data)
+        .map_err(|e| anyhow!("Error al encriptar: {}", e))?;
+    
+    Ok((ciphertext, nonce_bytes.to_vec()))
 }
 
-impl EncryptionEngine {
-    pub fn new(key: &[u8]) -> Result<Self> {
-        let key = Key::from_slice(key);
-        let cipher = Aes256Gcm::new(key);
-        
-        Ok(Self { cipher })
-    }
+pub fn decrypt_data(data: &[u8], key: &[u8], nonce: &[u8]) -> Result<Vec<u8>> {
+    let key = Key::from_slice(key);
+    let cipher = ChaCha20Poly1305::new(key);
     
-    pub fn encrypt(&self, data: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
-        let mut nonce_bytes = [0u8; 12];
-        rand::thread_rng().fill_bytes(&mut nonce_bytes);
-        let nonce = Nonce::from_slice(&nonce_bytes);
-        
-        let ciphertext = self.cipher.encrypt(nonce, data)
-            .map_err(|e| anyhow!("Error al encriptar: {}", e))?;
-        
-        Ok((ciphertext, nonce_bytes.to_vec()))
-    }
+    let nonce = Nonce::from_slice(nonce);
     
-    pub fn decrypt(&self, ciphertext: &[u8], nonce: &[u8]) -> Result<Vec<u8>> {
-        let nonce = Nonce::from_slice(nonce);
-        
-        let plaintext = self.cipher.decrypt(nonce, ciphertext)
-            .map_err(|e| anyhow!("Error al desencriptar: {}", e))?;
-        
-        Ok(plaintext)
-    }
+    let plaintext = cipher.decrypt(nonce, data)
+        .map_err(|e| anyhow!("Error al desencriptar: {}", e))?;
+    
+    Ok(plaintext)
 }
 
 pub fn generate_random_bytes(length: usize) -> Vec<u8> {

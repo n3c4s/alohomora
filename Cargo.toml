@@ -1,8 +1,8 @@
 [package]
 name = "alohopass"
 version = "0.1.0"
-edition = "2025"
-authors = ["Charly <charly@alohopass.com>"]
+edition = "2021"
+authors = ["n3c4s <n3c4s@github.com>"]
 description = "Un gestor de contraseñas seguro y moderno inspirado en el encantamiento Alohomora"
 license = "MIT"
 repository = "https://github.com/n3c4s/alohomora"
@@ -11,12 +11,9 @@ keywords = ["password-manager", "security", "encryption", "tauri", "rust"]
 
 [dependencies]
 # Tauri
-tauri = { version = "1.5", features = ["api-all"] }
+tauri = { version = "1.5", features = [ "window-all", "global-shortcut-all", "dialog-all", "fs-all", "shell-open"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-
-# Criptografía
-aes-gcm = "0.10"
 argon2 = "0.5"
 rand = "0.8"
 base64 = "0.21"
@@ -30,10 +27,12 @@ chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.0", features = ["v4", "serde"] }
 anyhow = "1.0"
 thiserror = "1.0"
+dirs = "5.0"
 
 # Logging
 log = "0.4"
 env_logger = "0.10"
+chacha20poly1305 = "0.10.1"
 
 [build-dependencies]
 tauri-build = { version = "1.5", features = [] }

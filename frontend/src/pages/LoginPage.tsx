@@ -169,6 +169,26 @@ const LoginPage = () => {
               isFirstTime ? 'Configurar Alohopass' : 'Iniciar Sesión'
             )}
           </button>
+
+          {/* Botón de restablecer (solo cuando no es primera vez) */}
+          {!isFirstTime && (
+            <div className="space-y-3">
+              <div className="text-center">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  ¿Olvidaste tu contraseña maestra?
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  toast.error('Funcionalidad de recuperación en desarrollo. Por ahora, puedes eliminar la base de datos para empezar de nuevo.');
+                }}
+                className="w-full btn-secondary py-2 text-sm"
+              >
+                Restablecer Contraseña
+              </button>
+            </div>
+          )}
         </form>
 
         {/* Información adicional */}

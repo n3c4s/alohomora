@@ -14,6 +14,7 @@ import {
   User
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import { useGlobalShortcut } from '../hooks/useGlobalShortcut'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -31,6 +32,9 @@ const Layout = ({ children }: LayoutProps) => {
   
   const location = useLocation()
   const { logout } = useAuthStore()
+
+  // Usar el hook de atajos de teclado globales
+  useGlobalShortcut()
 
   const toggleDarkMode = () => {
     const newMode = !darkMode
@@ -115,6 +119,17 @@ const Layout = ({ children }: LayoutProps) => {
               )
             })}
           </nav>
+          
+          {/* Información de atajos de teclado */}
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+              Atajos de Teclado
+            </h4>
+            <div className="space-y-1 text-xs text-gray-400 dark:text-gray-500">
+              <div>Ctrl+Shift+A: Autofill</div>
+              <div>Ctrl+Shift+G: Generar</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -172,4 +187,4 @@ const Layout = ({ children }: LayoutProps) => {
   )
 }
 
-export default Layout 
+export default Layout

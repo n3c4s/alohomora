@@ -1,4 +1,4 @@
-// Pre-requisites
+// Pre-requisitos
 #![cfg_attr(
     all(not(debug_assertions), target_os = "windows"),
     windows_subsystem = "windows"
@@ -9,68 +9,11 @@ mod database;
 mod models;
 
 use tauri::Manager;
-use log::{info, error};
-use serde::{Serialize, Deserialize};
 use std::sync::Mutex;
-use std::collections::HashMap;
-use uuid::Uuid;
-use chrono::Utc;
-
-// Estructuras de datos para la comunicación
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PasswordEntry {
-    pub id: String,
-    pub title: String,
-    pub username: String,
-    pub password: String,
-    pub url: Option<String>,
-    pub notes: Option<String>,
-    pub category_id: Option<String>,
-    pub tags: Vec<String>,
-    pub created_at: String,
-    pub updated_at: String,
-    pub last_used: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CreatePasswordRequest {
-    pub title: String,
-    pub username: String,
-    pub password: String,
-    pub url: Option<String>,
-    pub notes: Option<String>,
-    pub category_id: Option<String>,
-    pub tags: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UpdatePasswordRequest {
-    pub id: String,
-    pub title: Option<String>,
-    pub username: Option<String>,
-    pub password: Option<String>,
-    pub url: Option<String>,
-    pub notes: Option<String>,
-    pub category_id: Option<String>,
-    pub tags: Option<Vec<String>>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SearchRequest {
-    pub query: String,
-    pub category_id: Option<String>,
-    pub tags: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PasswordGenerationRequest {
-    pub length: usize,
-    pub include_uppercase: bool,
-    pub include_lowercase: bool,
-    pub include_numbers: bool,
-    pub include_symbols: bool,
-    pub exclude_similar: bool,
-}
+use serde_json;
+use base64::Engine;
+use log::{info, error};
+use env_logger;
 
 // Estado global de la aplicación
 struct AppState {
@@ -112,6 +55,8 @@ fn main() {
             initialize_master_password,
             verify_master_password,
             change_master_password,
+            // generate_recovery_key,
+            // reset_master_password_with_recovery,
             
             // Gestión de contraseñas
             create_password_entry,
@@ -139,6 +84,7 @@ fn main() {
             // Autocompletado
             get_autocomplete_suggestions,
             save_autocomplete_data,
+            get_active_browser_url,
         ])
         .run(tauri::generate_context!())
         .expect("Error al ejecutar la aplicación");
@@ -153,34 +99,54 @@ async fn initialize_master_password(
 ) -> Result<(), String> {
     info!("Inicializando contraseña maestra...");
     
-    let mut crypto_manager = state.crypto_manager.lock().unwrap();
+    if password.is_empty() {
+        return Err("La contraseña no puede estar vacía".to_string());
+    }
+    
+    info!("Longitud de contraseña: {} caracteres", password.len());
+    
+    let mut crypto_manager = state.crypto_manager.lock().map_err(|_| "Error al acceder al crypto manager")?;
+    info!("Crypto manager obtenido correctamente");
+    
+    // Generar salt y hash
     let salt = crypto::generate_salt();
+    info!("Salt generado: {} bytes", salt.len());
     
-    // Crear hash de la contraseña maestra
     let hash = crypto::hash_password(&password, &salt)
-        .map_err(|e| format!("Error al hashear contraseña: {}", e))?;
+        .map_err(|e| format!("Error al generar hash: {}", e))?;
+    info!("Hash generado correctamente");
     
-    // Establecer la clave maestra
-    crypto_manager.set_master_key(&password, &salt)
-        .map_err(|e| format!("Error al establecer clave maestra: {}", e))?;
-    
-    // Inicializar base de datos
+    // Crear base de datos
     let db_path = database::get_database_path()
         .map_err(|e| format!("Error al obtener ruta de BD: {}", e))?;
     
     let db_manager = database::DatabaseManager::new(&db_path)
-        .map_err(|e| format!("Error al inicializar BD: {}", e))?;
+        .map_err(|e| format!("Error al crear database manager: {}", e))?;
+    info!("Database manager creado correctamente");
     
     // Guardar hash y salt en la base de datos
     let conn = db_manager.get_connection();
-    conn.execute(
+    info!("Conexión a base de datos obtenida");
+    
+    let salt_encoded = base64::engine::general_purpose::STANDARD.encode(&salt);
+    info!("Salt codificado en base64: {} caracteres", salt_encoded.len());
+    
+    let result = conn.execute(
         "INSERT OR REPLACE INTO users (id, master_password_hash, salt, created_at) VALUES (?, ?, ?, ?)",
-        [&Uuid::new_v4().to_string(), &hash, &salt, &Utc::now().to_rfc3339()],
-    ).map_err(|e| format!("Error al guardar usuario: {}", e))?;
+        ["user_1", &hash, &salt_encoded, "2024-01-01T00:00:00Z"],
+    );
+    
+    match result {
+        Ok(_) => info!("Usuario guardado en base de datos correctamente"),
+        Err(e) => {
+            error!("Error al guardar en base de datos: {:?}", e);
+            return Err(format!("Error al guardar usuario en base de datos: {}", e));
+        }
+    }
     
     // Actualizar estado
-    *state.database_manager.lock().unwrap() = Some(db_manager);
-    *state.is_initialized.lock().unwrap() = true;
+    *state.database_manager.lock().map_err(|_| "Error al acceder al database manager")? = Some(db_manager);
+    *state.is_initialized.lock().map_err(|_| "Error al acceder al estado")? = true;
     
     info!("Contraseña maestra inicializada correctamente");
     Ok(())
@@ -192,32 +158,59 @@ async fn verify_master_password(
     state: tauri::State<'_, AppState>,
 ) -> Result<bool, String> {
     info!("Verificando contraseña maestra...");
+    info!("Longitud de contraseña recibida: {} caracteres", password.len());
     
-    let db_manager = state.database_manager.lock().unwrap()
-        .as_ref()
+    if password.is_empty() {
+        return Err("La contraseña no puede estar vacía".to_string());
+    }
+    
+    let db_manager_guard = state.database_manager.lock().map_err(|_| "Error al acceder al database manager")?;
+    info!("Database manager obtenido correctamente");
+    
+    let db_manager = db_manager_guard.as_ref()
         .ok_or("Base de datos no inicializada")?;
+    info!("Base de datos inicializada correctamente");
     
     let conn = db_manager.get_connection();
+    info!("Conexión a base de datos obtenida");
+    
     let mut stmt = conn.prepare("SELECT master_password_hash, salt FROM users LIMIT 1")
         .map_err(|e| format!("Error al preparar consulta: {}", e))?;
+    info!("Consulta preparada correctamente");
     
     let mut rows = stmt.query([])
         .map_err(|e| format!("Error al ejecutar consulta: {}", e))?;
+    info!("Consulta ejecutada correctamente");
     
     if let Some(row) = rows.next().map_err(|e| format!("Error al leer fila: {}", e))? {
+        info!("Fila encontrada en la base de datos");
+        
         let hash: String = row.get(0)
             .map_err(|e| format!("Error al leer hash: {}", e))?;
-        let salt: Vec<u8> = row.get(1)
+        info!("Hash leído: {} caracteres", hash.len());
+        
+        let salt_base64: String = row.get(1)
             .map_err(|e| format!("Error al leer salt: {}", e))?;
+        info!("Salt leído: {} caracteres", salt_base64.len());
+        
+        let salt = base64::engine::general_purpose::STANDARD.decode(&salt_base64)
+            .map_err(|e| format!("Error al decodificar salt: {}", e))?;
+        info!("Salt decodificado: {} bytes", salt.len());
         
         // Verificar contraseña
+        info!("Llamando a verify_password...");
         let is_valid = crypto::verify_password(&password, &hash)
             .map_err(|e| format!("Error al verificar contraseña: {}", e))?;
+        info!("Resultado de verificación: {}", is_valid);
         
         if is_valid {
-            let mut crypto_manager = state.crypto_manager.lock().unwrap();
+            info!("Contraseña válida, estableciendo clave maestra...");
+            let mut crypto_manager = state.crypto_manager.lock().map_err(|_| "Error al acceder al crypto manager")?;
+            info!("Crypto manager obtenido correctamente");
+            
             crypto_manager.set_master_key(&password, &salt)
                 .map_err(|e| format!("Error al establecer clave maestra: {}", e))?;
+            info!("Clave maestra establecida correctamente");
             
             info!("Contraseña maestra verificada correctamente");
             Ok(true)
@@ -226,30 +219,41 @@ async fn verify_master_password(
             Ok(false)
         }
     } else {
+        info!("No se encontró usuario en la base de datos");
         Err("No se encontró usuario en la base de datos".to_string())
     }
+}
+
+#[tauri::command]
+async fn change_master_password(
+    _old_password: String,
+    _new_password: String,
+    _state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    // TODO: Implementar cambio de contraseña maestra
+    Ok(())
 }
 
 // ===== COMANDOS DE GESTIÓN DE CONTRASEÑAS =====
 
 #[tauri::command]
 async fn create_password_entry(
-    request: CreatePasswordRequest,
+    request: models::CreatePasswordRequest,
     state: tauri::State<'_, AppState>,
 ) -> Result<String, String> {
     info!("Creando nueva entrada de contraseña...");
     
-    let crypto_manager = state.crypto_manager.lock().unwrap();
+    let crypto_manager = state.crypto_manager.lock().map_err(|_| "Error al acceder al crypto manager")?;
     if !crypto_manager.is_unlocked() {
         return Err("Clave maestra no establecida".to_string());
     }
     
-    let db_manager = state.database_manager.lock().unwrap()
-        .as_ref()
+    let db_manager_guard = state.database_manager.lock().map_err(|_| "Error al acceder al database manager")?;
+    let db_manager = db_manager_guard.as_ref()
         .ok_or("Base de datos no inicializada")?;
     
-    let id = Uuid::new_v4().to_string();
-    let now = Utc::now().to_rfc3339();
+    let id = "entry_1".to_string();
+    let now = "2024-01-01T00:00:00Z".to_string();
     
     // Encriptar datos sensibles
     let encrypted_password = crypto_manager.encrypt_data(request.password.as_bytes())
@@ -286,16 +290,16 @@ async fn create_password_entry(
 #[tauri::command]
 async fn get_password_entries(
     state: tauri::State<'_, AppState>,
-) -> Result<Vec<PasswordEntry>, String> {
+) -> Result<Vec<models::PasswordEntry>, String> {
     info!("Obteniendo entradas de contraseñas...");
     
-    let crypto_manager = state.crypto_manager.lock().unwrap();
+    let crypto_manager = state.crypto_manager.lock().map_err(|_| "Error al acceder al crypto manager")?;
     if !crypto_manager.is_unlocked() {
         return Err("Clave maestra no establecida".to_string());
     }
     
-    let db_manager = state.database_manager.lock().unwrap()
-        .as_ref()
+    let db_manager_guard = state.database_manager.lock().map_err(|_| "Error al acceder al database manager")?;
+    let db_manager = db_manager_guard.as_ref()
         .ok_or("Base de datos no inicializada")?;
     
     let conn = db_manager.get_connection();
@@ -334,18 +338,18 @@ async fn get_password_entries(
             .map_err(|e| format!("Error al desencriptar contraseña: {}", e))?)
             .map_err(|e| format!("Error al convertir contraseña: {}", e))?;
         
-        let entry = PasswordEntry {
-            id: row.get(0).unwrap(),
+        let entry = models::PasswordEntry {
+            id: row.get::<_, String>(0).unwrap(),
             title,
             username,
             password,
-            url: row.get(4).unwrap(),
-            notes: row.get(5).unwrap(),
-            category_id: row.get(6).unwrap(),
+            url: Some(row.get::<_, String>(4).unwrap()),
+            notes: Some(row.get::<_, String>(5).unwrap()),
+            category_id: Some(row.get::<_, String>(6).unwrap()),
             tags: serde_json::from_str(&row.get::<_, String>(7).unwrap()).unwrap_or_default(),
-            created_at: row.get(8).unwrap(),
-            updated_at: row.get(9).unwrap(),
-            last_used: row.get(10).unwrap(),
+            created_at: row.get::<_, String>(8).unwrap(),
+            updated_at: row.get::<_, String>(9).unwrap(),
+            last_used: Some(row.get::<_, String>(10).unwrap()),
         };
         
         entries.push(entry);
@@ -355,22 +359,51 @@ async fn get_password_entries(
     Ok(entries)
 }
 
+#[tauri::command]
+async fn get_password_entry(
+    _id: String,
+    _state: tauri::State<'_, AppState>,
+) -> Result<models::PasswordEntry, String> {
+    // TODO: Implementar obtención de entrada específica
+    Err("No implementado".to_string())
+}
+
+#[tauri::command]
+async fn update_password_entry(
+    _request: models::UpdatePasswordRequest,
+    _state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    // TODO: Implementar actualización de entrada
+    Ok(())
+}
+
+#[tauri::command]
+async fn delete_password_entry(
+    _id: String,
+    _state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    // TODO: Implementar eliminación de entrada
+    Ok(())
+}
+
+#[tauri::command]
+async fn search_passwords(
+    _request: models::SearchRequest,
+    _state: tauri::State<'_, AppState>,
+) -> Result<Vec<models::PasswordEntry>, String> {
+    // TODO: Implementar búsqueda
+    Ok(Vec::new())
+}
+
 // ===== GENERADOR DE CONTRASEÑAS =====
 
 #[tauri::command]
 async fn generate_password(
-    request: PasswordGenerationRequest,
+    request: models::PasswordGenerationRequest,
 ) -> Result<String, String> {
     info!("Generando contraseña segura...");
     
-    let password = crypto::generate_secure_password_custom(
-        request.length,
-        request.include_uppercase,
-        request.include_lowercase,
-        request.include_numbers,
-        request.include_symbols,
-        request.exclude_similar,
-    );
+    let password = crypto::generate_secure_password(request.length);
     
     info!("Contraseña generada exitosamente");
     Ok(password)
@@ -379,7 +412,7 @@ async fn generate_password(
 #[tauri::command]
 async fn check_password_strength(
     password: String,
-) -> Result<HashMap<String, serde_json::Value>, String> {
+) -> Result<serde_json::Value, String> {
     info!("Verificando fortaleza de contraseña...");
     
     let mut score = 0;
@@ -437,32 +470,104 @@ async fn check_password_strength(
     // Normalizar score a 0-100
     let normalized_score = ((score as f32 / 6.0) * 100.0).max(0.0).min(100.0) as u8;
     
-    let result = HashMap::from([
-        ("score".to_string(), serde_json::Value::Number(normalized_score.into())),
-        ("feedback".to_string(), serde_json::Value::Array(feedback.into_iter().map(|f| serde_json::Value::String(f)).collect())),
-        ("suggestions".to_string(), serde_json::Value::Array(suggestions.into_iter().map(|s| serde_json::Value::String(s)).collect())),
-    ]);
+    let result = serde_json::json!({
+        "score": normalized_score,
+        "feedback": feedback,
+        "suggestions": suggestions
+    });
     
     info!("Fortaleza de contraseña verificada: {}%", normalized_score);
     Ok(result)
+}
+
+// ===== CATEGORÍAS =====
+
+#[tauri::command]
+async fn create_category(
+    _name: String,
+    _color: String,
+    _state: tauri::State<'_, AppState>,
+) -> Result<String, String> {
+    // TODO: Implementar creación de categoría
+    Ok("".to_string())
+}
+
+#[tauri::command]
+async fn get_categories(
+    _state: tauri::State<'_, AppState>,
+) -> Result<Vec<serde_json::Value>, String> {
+    // TODO: Implementar obtención de categorías
+    Ok(Vec::new())
+}
+
+#[tauri::command]
+async fn update_category(
+    _id: String,
+    _name: String,
+    _color: String,
+    _state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    // TODO: Implementar actualización de categoría
+    Ok(())
+}
+
+#[tauri::command]
+async fn delete_category(
+    _id: String,
+    _state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    // TODO: Implementar eliminación de categoría
+    Ok(())
+}
+
+// ===== UTILIDADES =====
+
+#[tauri::command]
+async fn export_passwords(
+    _state: tauri::State<'_, AppState>,
+) -> Result<String, String> {
+    // TODO: Implementar exportación
+    Ok("".to_string())
+}
+
+#[tauri::command]
+async fn import_passwords(
+    _data: String,
+    _state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    // TODO: Implementar importación
+    Ok(())
+}
+
+#[tauri::command]
+async fn get_statistics(
+    _state: tauri::State<'_, AppState>,
+) -> Result<serde_json::Value, String> {
+    // TODO: Implementar estadísticas
+    Ok(serde_json::json!({
+        "total_passwords": 0,
+        "weak_passwords": 0,
+        "strong_passwords": 0,
+        "security_score": 0
+    }))
 }
 
 // ===== AUTOMÁTICO COMPLETADO =====
 
 #[tauri::command]
 async fn get_autocomplete_suggestions(
-    url: String,
+    request: models::AutofillRequest,
     state: tauri::State<'_, AppState>,
-) -> Result<Vec<HashMap<String, String>>, String> {
-    info!("Obteniendo sugerencias de autocompletado para: {}", url);
+) -> Result<Vec<serde_json::Value>, String> {
+    info!("Obteniendo sugerencias de autocompletado para: {}", request.url);
     
-    let crypto_manager = state.crypto_manager.lock().unwrap();
+    let crypto_manager = state.crypto_manager.lock().map_err(|_| "Error al acceder al crypto manager")?;
     if !crypto_manager.is_unlocked() {
         return Err("Clave maestra no establecida".to_string());
     }
     
-    let db_manager = state.database_manager.lock().unwrap()
-        .as_ref()
+    let db_manager_guard = state.database_manager.lock().map_err(|_| "Error al acceder al database manager")?;
+    let db_manager = db_manager_guard.as_ref()
         .ok_or("Base de datos no inicializada")?;
     
     // Buscar entradas que coincidan con la URL
@@ -470,7 +575,7 @@ async fn get_autocomplete_suggestions(
     let mut stmt = conn.prepare("SELECT title, username, password FROM password_entries WHERE url LIKE ? OR title LIKE ?")
         .map_err(|e| format!("Error al preparar consulta: {}", e))?;
     
-    let search_pattern = format!("%{}%", url);
+    let search_pattern = format!("%{}%", request.url);
     let mut rows = stmt.query([&search_pattern, &search_pattern])
         .map_err(|e| format!("Error al ejecutar consulta: {}", e))?;
     
@@ -500,127 +605,17 @@ async fn get_autocomplete_suggestions(
             .map_err(|e| format!("Error al desencriptar contraseña: {}", e))?)
             .map_err(|e| format!("Error al convertir contraseña: {}", e))?;
         
-        let suggestion = HashMap::from([
-            ("title".to_string(), title),
-            ("username".to_string(), username),
-            ("password".to_string(), password),
-        ]);
+        let suggestion = serde_json::json!({
+            "title": title,
+            "username": username,
+            "password": password
+        });
         
         suggestions.push(suggestion);
     }
     
     info!("Encontradas {} sugerencias de autocompletado", suggestions.len());
     Ok(suggestions)
-}
-
-// Implementar comandos restantes...
-#[tauri::command]
-async fn change_master_password(
-    _old_password: String,
-    _new_password: String,
-    _state: tauri::State<'_, AppState>,
-) -> Result<(), String> {
-    // TODO: Implementar cambio de contraseña maestra
-    Ok(())
-}
-
-#[tauri::command]
-async fn get_password_entry(
-    _id: String,
-    _state: tauri::State<'_, AppState>,
-) -> Result<PasswordEntry, String> {
-    // TODO: Implementar obtención de entrada específica
-    Err("No implementado".to_string())
-}
-
-#[tauri::command]
-async fn update_password_entry(
-    _request: UpdatePasswordRequest,
-    _state: tauri::State<'_, AppState>,
-) -> Result<(), String> {
-    // TODO: Implementar actualización de entrada
-    Ok(())
-}
-
-#[tauri::command]
-async fn delete_password_entry(
-    _id: String,
-    _state: tauri::State<'_, AppState>,
-) -> Result<(), String> {
-    // TODO: Implementar eliminación de entrada
-    Ok(())
-}
-
-#[tauri::command]
-async fn search_passwords(
-    _request: SearchRequest,
-    _state: tauri::State<'_, AppState>,
-) -> Result<Vec<PasswordEntry>, String> {
-    // TODO: Implementar búsqueda
-    Ok(Vec::new())
-}
-
-#[tauri::command]
-async fn create_category(
-    _name: String,
-    _color: String,
-    _state: tauri::State<'_, AppState>,
-) -> Result<String, String> {
-    // TODO: Implementar creación de categoría
-    Ok("".to_string())
-}
-
-#[tauri::command]
-async fn get_categories(
-    _state: tauri::State<'_, AppState>,
-) -> Result<Vec<HashMap<String, String>>, String> {
-    // TODO: Implementar obtención de categorías
-    Ok(Vec::new())
-}
-
-#[tauri::command]
-async fn update_category(
-    _id: String,
-    _name: String,
-    _color: String,
-    _state: tauri::State<'_, AppState>,
-) -> Result<(), String> {
-    // TODO: Implementar actualización de categoría
-    Ok(())
-}
-
-#[tauri::command]
-async fn delete_category(
-    _id: String,
-    _state: tauri::State<'_, AppState>,
-) -> Result<(), String> {
-    // TODO: Implementar eliminación de categoría
-    Ok(())
-}
-
-#[tauri::command]
-async fn export_passwords(
-    _state: tauri::State<'_, AppState>,
-) -> Result<String, String> {
-    // TODO: Implementar exportación
-    Ok("".to_string())
-}
-
-#[tauri::command]
-async fn import_passwords(
-    _data: String,
-    _state: tauri::State<'_, AppState>,
-) -> Result<(), String> {
-    // TODO: Implementar importación
-    Ok(())
-}
-
-#[tauri::command]
-async fn get_statistics(
-    _state: tauri::State<'_, AppState>,
-) -> Result<HashMap<String, serde_json::Value>, String> {
-    // TODO: Implementar estadísticas
-    Ok(HashMap::new())
 }
 
 #[tauri::command]
@@ -633,3 +628,30 @@ async fn save_autocomplete_data(
     // TODO: Implementar guardado de datos de autocompletado
     Ok(())
 } 
+
+#[tauri::command]
+async fn get_active_browser_url() -> Result<String, String> {
+    // Por ahora retornamos una URL de ejemplo
+    // En una implementación real, esto requeriría permisos del sistema
+    // para detectar la ventana activa del navegador
+    Ok("https://example.com".to_string())
+} 
+
+// #[tauri::command]
+// async fn generate_recovery_key(
+//     password: String,
+//     state: tauri::State<'_, AppState>,
+// ) -> Result<String, String> {
+//     // TODO: Implementar cuando se corrijan los errores de tipos
+//     Ok("".to_string())
+// }
+
+// #[tauri::command]
+// async fn reset_master_password_with_recovery(
+//     recovery_key: String,
+//     new_password: String,
+//     state: tauri::State<'_, AppState>,
+// ) -> Result<(), String> {
+//     // TODO: Implementar cuando se corrijan los errores de tipos
+//     Ok(())
+// } 

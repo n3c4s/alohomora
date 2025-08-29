@@ -4,9 +4,10 @@ mod key_derivation;
 pub use encryption::*;
 pub use key_derivation::*;
 
-use aes_gcm::{Aes256Gcm, Key, Nonce};
-use aes_gcm::aead::{Aead, NewAead};
-use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier, PasswordHashString};
+use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce, KeyInit};
+use chacha20poly1305::aead::Aead;
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
+use argon2::password_hash::{rand_core::OsRng, SaltString};
 use rand::{Rng, RngCore};
 use serde::{Serialize, Deserialize};
 use anyhow::{Result, anyhow};
@@ -33,7 +34,7 @@ impl CryptoManager {
         Self { master_key: None }
     }
     
-    pub fn set_master_key(&mut self, password: &str, salt: &[u8]) -> Result<()> {
+    pub fn set_master_key(&mut self, password: &str, salt: &[u8]) -> Result<(), String> {
         let key = derive_key_from_password(password, salt)?;
         self.master_key = Some(key);
         Ok(())
@@ -48,7 +49,7 @@ impl CryptoManager {
             .ok_or_else(|| anyhow!("Master key no establecida"))?;
         
         let key = Key::from_slice(master_key);
-        let cipher = Aes256Gcm::new(key);
+        let cipher = ChaCha20Poly1305::new(key);
         
         let mut nonce_bytes = [0u8; 12];
         rand::thread_rng().fill_bytes(&mut nonce_bytes);
@@ -72,7 +73,7 @@ impl CryptoManager {
             .ok_or_else(|| anyhow!("Master key no establecida"))?;
         
         let key = Key::from_slice(master_key);
-        let cipher = Aes256Gcm::new(key);
+        let cipher = ChaCha20Poly1305::new(key);
         
         let nonce = Nonce::from_slice(&encrypted_data.nonce);
         
@@ -85,29 +86,70 @@ impl CryptoManager {
     pub fn lock(&mut self) {
         self.master_key = None;
     }
+
+    pub fn unlock(&mut self, password: &str, salt: &[u8]) -> Result<(), String> {
+        let key = derive_key_from_password(password, salt)?;
+        self.master_key = Some(key);
+        Ok(())
+    }
 }
 
-pub fn derive_key_from_password(password: &str, salt: &[u8]) -> Result<Vec<u8>> {
-    let argon2 = Argon2::default();
+// Funciones estáticas del módulo
+pub fn generate_recovery_key() -> Result<String, Box<dyn std::error::Error>> {
+    let mut rng = OsRng;
     let mut key = [0u8; 32];
-    
-    argon2.hash_password_into(password.as_bytes(), salt, &mut key)
-        .map_err(|e| anyhow!("Error en derivación de clave: {}", e))?;
-    
-    Ok(key.to_vec())
+    rng.fill_bytes(&mut key);
+    Ok(hex::encode(key))
 }
 
-pub fn hash_password(password: &str, salt: &[u8]) -> Result<String> {
+pub fn encrypt_with_recovery_key(data: &str, recovery_key: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    let key_bytes = hex::decode(recovery_key)?;
+    let key = Key::from_slice(&key_bytes);
+    let cipher = ChaCha20Poly1305::new(key);
+    let nonce = Nonce::from_slice(b"recovery_nonce");
+    
+    let encrypted = cipher.encrypt(nonce, data.as_bytes())
+        .map_err(|e| format!("Error al encriptar: {}", e))?;
+    
+    Ok(encrypted)
+}
+
+pub fn decrypt_with_recovery_key(encrypted_data: &[u8], recovery_key: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    let key_bytes = hex::decode(recovery_key)?;
+    let key = Key::from_slice(&key_bytes);
+    let cipher = ChaCha20Poly1305::new(key);
+    let nonce = Nonce::from_slice(b"recovery_nonce");
+    
+    let encrypted = cipher.decrypt(nonce, encrypted_data)
+        .map_err(|e| format!("Error al desencriptar: {}", e))?;
+    
+    Ok(encrypted)
+}
+
+pub fn derive_key_from_password(password: &str, salt: &[u8]) -> Result<Vec<u8>, String> {
+    let config = Argon2::default();
+    let salt_string = SaltString::encode_b64(salt)
+        .map_err(|e| format!("Error al codificar salt: {}", e))?;
+    
+    let password_hash = config.hash_password(password.as_bytes(), &salt_string)
+        .map_err(|e| format!("Error al hashear contraseña: {}", e))?;
+    
+    let hash = password_hash.hash.unwrap();
+    Ok(hash.as_bytes().to_vec())
+}
+
+pub fn hash_password(password: &str, _salt: &[u8]) -> Result<String, String> {
     let argon2 = Argon2::default();
-    let hash = argon2.hash_password(password.as_bytes(), salt)
-        .map_err(|e| anyhow!("Error al hashear contraseña: {}", e))?;
+    let salt_string = SaltString::generate(&mut OsRng);
+    let hash = argon2.hash_password(password.as_bytes(), &salt_string)
+        .map_err(|e| format!("Error al hashear contraseña: {}", e))?;
     
     Ok(hash.to_string())
 }
 
-pub fn verify_password(password: &str, hash: &str) -> Result<bool> {
+pub fn verify_password(password: &str, hash: &str) -> Result<bool, String> {
     let parsed_hash = PasswordHash::new(hash)
-        .map_err(|e| anyhow!("Hash inválido: {}", e))?;
+        .map_err(|e| format!("Error al parsear hash: {}", e))?;
     
     Ok(Argon2::default()
         .verify_password(password.as_bytes(), &parsed_hash)
@@ -121,63 +163,13 @@ pub fn generate_salt() -> Vec<u8> {
 }
 
 pub fn generate_secure_password(length: usize) -> String {
-    const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
-                            abcdefghijklmnopqrstuvwxyz\
-                            0123456789)(*&^%$#@!~";
-    
+    const CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
     let mut rng = rand::thread_rng();
-    let password: String = (0..length)
+    
+    (0..length)
         .map(|_| {
-            let idx = rng.gen_range(0..CHARSET.len());
-            CHARSET[idx] as char
+            let idx = rng.gen_range(0..CHARS.len());
+            CHARS[idx] as char
         })
-        .collect();
-    
-    password
-} 
-
-pub fn generate_secure_password_custom(
-    length: usize,
-    include_uppercase: bool,
-    include_lowercase: bool,
-    include_numbers: bool,
-    include_symbols: bool,
-    exclude_similar: bool,
-) -> String {
-    let mut charset = Vec::new();
-    
-    if include_uppercase {
-        charset.extend_from_slice(b"ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-    }
-    
-    if include_lowercase {
-        charset.extend_from_slice(b"abcdefghijklmnopqrstuvwxyz");
-    }
-    
-    if include_numbers {
-        charset.extend_from_slice(b"0123456789");
-    }
-    
-    if include_symbols {
-        if exclude_similar {
-            charset.extend_from_slice(b"!@#$%^&*()_+-=[]{}|;:,.<>?");
-        } else {
-            charset.extend_from_slice(b"!@#$%^&*()_+-=[]{}|;:,.<>?~`");
-        }
-    }
-    
-    // Si no se especificó ningún tipo, usar todos
-    if charset.is_empty() {
-        charset = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?".to_vec();
-    }
-    
-    let mut rng = rand::thread_rng();
-    let password: String = (0..length)
-        .map(|_| {
-            let idx = rng.gen_range(0..charset.len());
-            charset[idx] as char
-        })
-        .collect();
-    
-    password
+        .collect()
 } 

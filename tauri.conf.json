@@ -1,17 +1,13 @@
 {
   "build": {
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "powershell -Command \"cd frontend; npm run dev\"",
+    "beforeBuildCommand": "powershell -Command \"cd frontend; npm run build\"",
     "devPath": "http://localhost:5173",
-    "distDir": "../dist"
+    "distDir": "frontend/dist"
   },
   "package": {
     "productName": "Alohopass",
-    "version": "0.1.0",
-    "authors": ["n3c4s <n3c4s@github.com>"],
-    "description": "Gestor de contraseñas seguro inspirado en Alohomora",
-    "homepage": "https://alohopass.com",
-    "repository": "https://github.com/n3c4s/alohomora"
+    "version": "0.1.0"
   },
   "tauri": {
     "allowlist": {
@@ -26,6 +22,12 @@
       "fs": {
         "all": true,
         "scope": ["$APPDATA/*", "$APPDATA/alohopass/*"]
+      },
+      "globalShortcut": {
+        "all": true
+      },
+      "window": {
+        "all": true
       }
     },
     "bundle": {
