@@ -568,10 +568,46 @@ async fn update_password_entry(
 
 #[tauri::command]
 async fn delete_password_entry(
-    _id: String,
-    _state: tauri::State<'_, AppState>,
+    id: String,
+    state: tauri::State<'_, AppState>,
 ) -> Result<(), String> {
-    // TODO: Implementar eliminación de entrada
+    info!("🚨🚨🚨 COMANDO delete_password_entry EJECUTÁNDOSE 🚨🚨🚨");
+    info!("=== INICIO: Eliminando entrada de contraseña ===");
+    info!("ID a eliminar: {}", id);
+    
+    info!("Verificando crypto manager...");
+    let crypto_manager = state.crypto_manager.lock().map_err(|_| "Error al acceder al crypto manager")?;
+    info!("Crypto manager obtenido");
+    
+    info!("Verificando si crypto manager está desbloqueado...");
+    if !crypto_manager.is_unlocked() {
+        error!("❌ Crypto manager NO está desbloqueado en delete_password_entry");
+        return Err("Clave maestra no establecida. Debes hacer login primero.".to_string());
+    }
+    info!("✅ Crypto manager está desbloqueado correctamente");
+    
+    info!("Verificando database manager...");
+    let db_manager_guard = state.database_manager.lock().map_err(|_| "Error al acceder al database manager")?;
+    let db_manager = db_manager_guard.as_ref()
+        .ok_or("Base de datos no inicializada")?;
+    info!("Database manager obtenido correctamente");
+    
+    info!("Eliminando entrada de la base de datos...");
+    let conn = db_manager.get_connection();
+    info!("Conexión a base de datos obtenida");
+    
+    let rows_affected = conn.execute(
+        "DELETE FROM password_entries WHERE id = ?",
+        rusqlite::params![id]
+    ).map_err(|e| format!("Error al eliminar entrada: {}", e))?;
+    
+    if rows_affected == 0 {
+        info!("⚠️ No se encontró entrada con ID: {}", id);
+        return Err("No se encontró la entrada de contraseña".to_string());
+    }
+    
+    info!("✅ Entrada eliminada exitosamente. Filas afectadas: {}", rows_affected);
+    info!("=== FIN: Entrada de contraseña eliminada exitosamente ===");
     Ok(())
 }
 
