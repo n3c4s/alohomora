@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, Edit, Trash2, Eye, EyeOff, Copy, Check } from 'lucide-react'
-import { usePasswordStore, PasswordEntry, CreatePasswordRequest } from '../stores/passwordStore'
+import { Plus, Search, Edit, Trash2, Eye, EyeOff, Copy, Check, RefreshCw } from 'lucide-react'
+import { usePasswordStore, PasswordEntry, CreatePasswordRequest, PasswordGenerationRequest } from '../stores/passwordStore'
 import toast from 'react-hot-toast'
 
 const PasswordsPage = () => {
@@ -18,7 +18,9 @@ const PasswordsPage = () => {
     createPassword, 
     updatePassword, 
     deletePassword, 
-    searchPasswords 
+    searchPasswords,
+    generatePassword,
+    checkPasswordStrength
   } = usePasswordStore()
 
   const [formData, setFormData] = useState<CreatePasswordRequest>({
@@ -31,6 +33,19 @@ const PasswordsPage = () => {
     tags: [],
   })
 
+  // Configuración para generación de contraseña
+  const [passwordSettings, setPasswordSettings] = useState<PasswordGenerationRequest>({
+    length: 16,
+    include_uppercase: true,
+    include_lowercase: true,
+    include_numbers: true,
+    include_symbols: true,
+    exclude_similar: true,
+  })
+
+  // Estado para la fortaleza de la contraseña
+  const [passwordStrength, setPasswordStrength] = useState<any>(null)
+
   useEffect(() => {
     fetchPasswords()
   }, [fetchPasswords])
@@ -40,6 +55,19 @@ const PasswordsPage = () => {
       toast.error(error)
     }
   }, [error])
+
+  // Escuchar el evento para abrir el modal de nueva contraseña
+  useEffect(() => {
+    const handleOpenNewPasswordModal = () => {
+      openAddModal()
+    }
+
+    window.addEventListener('openNewPasswordModal', handleOpenNewPasswordModal)
+    
+    return () => {
+      window.removeEventListener('openNewPasswordModal', handleOpenNewPasswordModal)
+    }
+  }, [])
 
   const handleSearch = (query: string) => {
     setSearchQuery(query)
@@ -134,6 +162,36 @@ const PasswordsPage = () => {
     setShowAddModal(false)
     setEditingPassword(null)
     resetForm()
+  }
+
+  const handleGeneratePassword = async () => {
+    const generatedPassword = await generatePassword(passwordSettings)
+    if (generatedPassword) {
+      setFormData(prev => ({ ...prev, password: generatedPassword }))
+      toast.success('Contraseña generada automáticamente')
+      
+      // Verificar fortaleza de la contraseña generada
+      const strength = await checkPasswordStrength(generatedPassword)
+      if (strength) {
+        setPasswordStrength(strength)
+      }
+    } else {
+      toast.error('Error al generar contraseña')
+    }
+  }
+
+  const handlePasswordChange = async (password: string) => {
+    setFormData(prev => ({ ...prev, password }))
+    
+    // Verificar fortaleza cuando cambie la contraseña
+    if (password.trim()) {
+      const strength = await checkPasswordStrength(password)
+      if (strength) {
+        setPasswordStrength(strength)
+      }
+    } else {
+      setPasswordStrength(null)
+    }
   }
 
   return (
@@ -376,20 +434,143 @@ const PasswordsPage = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Contraseña *
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.password}
-                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                    className="input-field"
-                    placeholder="Tu contraseña"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    URL
-                  </label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      required
+                      value={formData.password}
+                      onChange={(e) => handlePasswordChange(e.target.value)}
+                      className="input-field flex-1"
+                      placeholder="Tu contraseña o genera una automáticamente"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleGeneratePassword}
+                      className="btn-secondary px-3 py-2 flex items-center"
+                      title="Generar contraseña automáticamente"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </button>
+                  </div>
+                  
+                  {/* Configuración rápida de generación */}
+                  <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                        Configuración de generación:
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {passwordSettings.length} caracteres
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-4 text-xs">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={passwordSettings.include_uppercase}
+                          onChange={(e) => setPasswordSettings(prev => ({ ...prev, include_uppercase: e.target.checked }))}
+                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        />
+                        <span className="ml-1">ABC</span>
+                      </label>
+                      
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={passwordSettings.include_lowercase}
+                          onChange={(e) => setPasswordSettings(prev => ({ ...prev, include_lowercase: e.target.checked }))}
+                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        />
+                        <span className="ml-1">abc</span>
+                      </label>
+                      
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={passwordSettings.include_numbers}
+                          onChange={(e) => setPasswordSettings(prev => ({ ...prev, include_numbers: e.target.checked }))}
+                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        />
+                        <span className="ml-1">123</span>
+                      </label>
+                      
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={passwordSettings.include_symbols}
+                          onChange={(e) => setPasswordSettings(prev => ({ ...prev, include_symbols: e.target.checked }))}
+                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        />
+                        <span className="ml-1">!@#</span>
+                      </label>
+                    </div>
+                    
+                    <div className="mt-2">
+                      <input
+                        type="range"
+                        min="8"
+                        max="32"
+                        value={passwordSettings.length}
+                        onChange={(e) => setPasswordSettings(prev => ({ ...prev, length: parseInt(e.target.value) }))}
+                        className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                      />
+                                         </div>
+                   </div>
+                   
+                   {/* Indicador de fortaleza de contraseña */}
+                   {passwordStrength && (
+                     <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                       <div className="flex items-center justify-between mb-2">
+                         <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                           Fortaleza de la contraseña:
+                         </span>
+                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                           passwordStrength.score >= 80 ? 'text-green-600 bg-green-100 dark:bg-green-900/20' :
+                           passwordStrength.score >= 60 ? 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20' :
+                           passwordStrength.score >= 40 ? 'text-orange-600 bg-orange-100 dark:bg-orange-900/20' :
+                           'text-red-600 bg-red-100 dark:bg-red-900/20'
+                         }`}>
+                           {passwordStrength.score}%
+                         </span>
+                       </div>
+                       
+                       {/* Barra de progreso */}
+                       <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+                         <div
+                           className={`h-2 rounded-full transition-all duration-300 ${
+                             passwordStrength.score >= 80 ? 'bg-green-500' :
+                             passwordStrength.score >= 60 ? 'bg-yellow-500' :
+                             passwordStrength.score >= 40 ? 'bg-orange-500' : 'bg-red-500'
+                           }`}
+                           style={{ width: `${passwordStrength.score}%` }}
+                         />
+                       </div>
+                       
+                       {/* Sugerencias */}
+                       {passwordStrength.suggestions && passwordStrength.suggestions.length > 0 && (
+                         <div className="mt-2">
+                           <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                             Sugerencias:
+                           </p>
+                           <ul className="space-y-1">
+                             {passwordStrength.suggestions.slice(0, 2).map((suggestion: string, index: number) => (
+                               <li key={index} className="text-xs text-gray-500 dark:text-gray-400 flex items-start">
+                                 <span className="text-primary-600 mr-1">•</span>
+                                 {suggestion}
+                               </li>
+                             ))}
+                           </ul>
+                         </div>
+                       )}
+                     </div>
+                   )}
+                 </div>
+                 
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                     URL
+                   </label>
                   <input
                     type="url"
                     value={formData.url}
@@ -431,21 +612,35 @@ const PasswordsPage = () => {
                   </p>
                 </div>
                 
-                <div className="flex space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="btn-secondary flex-1"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn-primary flex-1"
-                  >
-                    {editingPassword ? 'Actualizar' : 'Crear'}
-                  </button>
-                </div>
+                                  <div className="flex space-x-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      className="btn-secondary flex-1"
+                    >
+                      Cancelar
+                    </button>
+                    
+                    {/* Botón para generar contraseña si no hay una */}
+                    {!editingPassword && !formData.password && (
+                      <button
+                        type="button"
+                        onClick={handleGeneratePassword}
+                        className="btn-secondary flex-1 flex items-center justify-center"
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Generar Contraseña
+                      </button>
+                    )}
+                    
+                    <button
+                      type="submit"
+                      className="btn-primary flex-1"
+                      disabled={!formData.password.trim()}
+                    >
+                      {editingPassword ? 'Actualizar' : 'Crear'}
+                    </button>
+                  </div>
               </form>
             </div>
           </div>

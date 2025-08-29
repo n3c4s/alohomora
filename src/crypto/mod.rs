@@ -8,9 +8,11 @@ use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce, KeyInit};
 use chacha20poly1305::aead::Aead;
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use argon2::password_hash::{rand_core::OsRng, SaltString};
+use base64::Engine;
 use rand::{Rng, RngCore};
 use serde::{Serialize, Deserialize};
 use anyhow::{Result, anyhow};
+use log::{info, error};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptedData {
@@ -35,13 +37,38 @@ impl CryptoManager {
     }
     
     pub fn set_master_key(&mut self, password: &str, salt: &[u8]) -> Result<(), String> {
+        info!("🔄 CryptoManager: Iniciando set_master_key...");
+        info!("🔄 CryptoManager: Longitud de contraseña: {} caracteres", password.len());
+        info!("🔄 CryptoManager: Longitud de salt: {} bytes", salt.len());
+        
+        info!("🔄 CryptoManager: Llamando a derive_key_from_password...");
         let key = derive_key_from_password(password, salt)?;
+        info!("✅ CryptoManager: Clave derivada correctamente, longitud: {} bytes", key.len());
+        
+        info!("🔄 CryptoManager: Estableciendo master_key...");
         self.master_key = Some(key);
+        info!("✅ CryptoManager: master_key establecido correctamente");
+        
+        info!("🔄 CryptoManager: Verificando estado...");
+        if self.is_unlocked() {
+            info!("✅ CryptoManager: Estado verificado - está desbloqueado");
+        } else {
+            error!("❌ CryptoManager: Estado verificado - NO está desbloqueado");
+        }
+        
         Ok(())
     }
     
     pub fn is_unlocked(&self) -> bool {
-        self.master_key.is_some()
+        let unlocked = self.master_key.is_some();
+        info!("🔍 CryptoManager: is_unlocked() llamado - resultado: {}", unlocked);
+        if unlocked {
+            info!("🔍 CryptoManager: master_key presente, longitud: {} bytes", 
+                  self.master_key.as_ref().unwrap().len());
+        } else {
+            info!("🔍 CryptoManager: master_key NO presente");
+        }
+        unlocked
     }
     
     pub fn encrypt_data(&self, data: &[u8]) -> Result<EncryptedData> {
@@ -95,11 +122,15 @@ impl CryptoManager {
 }
 
 // Funciones estáticas del módulo
-pub fn generate_recovery_key() -> Result<String, Box<dyn std::error::Error>> {
-    let mut rng = OsRng;
-    let mut key = [0u8; 32];
-    rng.fill_bytes(&mut key);
-    Ok(hex::encode(key))
+pub fn generate_recovery_key() -> Result<String, String> {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    
+    // Generar 32 bytes aleatorios
+    let bytes: Vec<u8> = (0..32).map(|_| rng.gen()).collect();
+    
+    // Convertir a base64
+    Ok(base64::engine::general_purpose::STANDARD.encode(&bytes))
 }
 
 pub fn encrypt_with_recovery_key(data: &str, recovery_key: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
@@ -127,15 +158,30 @@ pub fn decrypt_with_recovery_key(encrypted_data: &[u8], recovery_key: &str) -> R
 }
 
 pub fn derive_key_from_password(password: &str, salt: &[u8]) -> Result<Vec<u8>, String> {
+    info!("🔄 derive_key_from_password: Iniciando...");
+    info!("🔄 derive_key_from_password: Longitud de contraseña: {} caracteres", password.len());
+    info!("🔄 derive_key_from_password: Longitud de salt: {} bytes", salt.len());
+    
+    info!("🔄 derive_key_from_password: Creando configuración Argon2...");
     let config = Argon2::default();
+    info!("✅ derive_key_from_password: Configuración Argon2 creada");
+    
+    info!("🔄 derive_key_from_password: Codificando salt a base64...");
     let salt_string = SaltString::encode_b64(salt)
         .map_err(|e| format!("Error al codificar salt: {}", e))?;
+    info!("✅ derive_key_from_password: Salt codificado correctamente");
     
+    info!("🔄 derive_key_from_password: Hasheando contraseña...");
     let password_hash = config.hash_password(password.as_bytes(), &salt_string)
         .map_err(|e| format!("Error al hashear contraseña: {}", e))?;
+    info!("✅ derive_key_from_password: Contraseña hasheada correctamente");
     
+    info!("🔄 derive_key_from_password: Extrayendo hash...");
     let hash = password_hash.hash.unwrap();
-    Ok(hash.as_bytes().to_vec())
+    let hash_bytes = hash.as_bytes().to_vec();
+    info!("✅ derive_key_from_password: Hash extraído, longitud: {} bytes", hash_bytes.len());
+    
+    Ok(hash_bytes)
 }
 
 pub fn hash_password(password: &str, _salt: &[u8]) -> Result<String, String> {

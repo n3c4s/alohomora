@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { 
   Lock, 
   Key, 
@@ -31,6 +31,7 @@ const Layout = ({ children }: LayoutProps) => {
   })
   
   const location = useLocation()
+  const navigate = useNavigate()
   const { logout } = useAuthStore()
 
   // Usar el hook de atajos de teclado globales
@@ -46,6 +47,21 @@ const Layout = ({ children }: LayoutProps) => {
     } else {
       document.documentElement.classList.remove('dark')
       localStorage.theme = 'light'
+    }
+  }
+
+  const handleNewPassword = () => {
+    // Si estamos en la página de contraseñas, abrir el modal
+    if (location.pathname === '/passwords') {
+      // Emitir un evento personalizado que PasswordsPage escuchará
+      window.dispatchEvent(new CustomEvent('openNewPasswordModal'))
+    } else {
+      // Si no estamos en la página de contraseñas, navegar allí
+      navigate('/passwords')
+      // Esperar un poco y luego abrir el modal
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('openNewPasswordModal'))
+      }, 100)
     }
   }
 
@@ -157,7 +173,10 @@ const Layout = ({ children }: LayoutProps) => {
               </div>
               
               {/* Botón de nueva contraseña */}
-              <button className="btn-primary flex items-center">
+              <button 
+                onClick={handleNewPassword}
+                className="btn-primary flex items-center"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Nueva
               </button>

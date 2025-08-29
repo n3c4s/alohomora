@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Shield, Eye, EyeOff, Sparkles } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import RecoveryModal from '../components/RecoveryModal'
 import toast from 'react-hot-toast'
 
 interface LoginForm {
@@ -13,6 +14,7 @@ const LoginPage = () => {
   const [isFirstTime, setIsFirstTime] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false)
   
   const { 
     isInitialized, 
@@ -20,7 +22,9 @@ const LoginPage = () => {
     error, 
     initializeMasterPassword, 
     verifyMasterPassword, 
-    clearError 
+    clearError,
+    clearPersistedState,
+    checkDatabaseStatus
   } = useAuthStore()
   
   const {
@@ -35,10 +39,27 @@ const LoginPage = () => {
 
   // Verificar si es la primera vez
   useEffect(() => {
-    if (!isInitialized) {
-      setIsFirstTime(true)
+    const checkStatus = async () => {
+      console.log('🔄 LoginPage: Limpiando estado persistente...');
+      clearPersistedState();
+      console.log('🔄 LoginPage: Verificando estado de la base de datos...');
+      await checkDatabaseStatus()
+      console.log('✅ LoginPage: Estado verificado, isInitialized:', isInitialized);
     }
+    checkStatus()
+  }, [checkDatabaseStatus, clearPersistedState])
+
+  // Actualizar isFirstTime cuando cambie isInitialized
+  useEffect(() => {
+    const newIsFirstTime = !isInitialized;
+    console.log('🔄 LoginPage: Actualizando isFirstTime:', newIsFirstTime, 'basado en isInitialized:', isInitialized);
+    setIsFirstTime(newIsFirstTime);
   }, [isInitialized])
+
+  // Debug del estado
+  useEffect(() => {
+    console.log('🔄 LoginPage: Estado cambiado - isInitialized:', isInitialized, 'isFirstTime:', isFirstTime);
+  }, [isInitialized, isFirstTime])
 
   // Limpiar errores cuando cambien
   useEffect(() => {
@@ -180,9 +201,7 @@ const LoginPage = () => {
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  toast.error('Funcionalidad de recuperación en desarrollo. Por ahora, puedes eliminar la base de datos para empezar de nuevo.');
-                }}
+                onClick={() => setShowRecoveryModal(true)}
                 className="w-full btn-secondary py-2 text-sm"
               >
                 Restablecer Contraseña
@@ -204,6 +223,12 @@ const LoginPage = () => {
           <p>Alohopass - Gestor de Contraseñas Seguro</p>
           <p className="mt-1">Inspirado en el encantamiento Alohomora de Harry Potter</p>
         </div>
+
+        {/* Modal de Recuperación */}
+        <RecoveryModal 
+          isOpen={showRecoveryModal} 
+          onClose={() => setShowRecoveryModal(false)} 
+        />
       </div>
     </div>
   )
