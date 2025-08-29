@@ -394,6 +394,7 @@ async fn create_password_entry(
     request: models::CreatePasswordRequest,
     state: tauri::State<'_, AppState>,
 ) -> Result<String, String> {
+    info!("🚨🚨🚨 COMANDO create_password_entry EJECUTÁNDOSE 🚨🚨🚨");
     info!("=== INICIO: Creando nueva entrada de contraseña ===");
     info!("Datos recibidos: title={}, username={}, password_length={}", 
           request.title, request.username, request.password.len());
@@ -404,10 +405,10 @@ async fn create_password_entry(
     
     info!("Verificando si crypto manager está desbloqueado...");
     if !crypto_manager.is_unlocked() {
-        error!("Crypto manager NO está desbloqueado");
+        error!("❌ Crypto manager NO está desbloqueado en create_password_entry");
         return Err("Clave maestra no establecida. Debes hacer login primero.".to_string());
     }
-    info!("Crypto manager está desbloqueado correctamente");
+    info!("✅ Crypto manager está desbloqueado correctamente");
     
     info!("Verificando database manager...");
     let db_manager_guard = state.database_manager.lock().map_err(|_| "Error al acceder al database manager")?;
@@ -436,19 +437,27 @@ async fn create_password_entry(
     let conn = db_manager.get_connection();
     info!("Conexión a base de datos obtenida");
     
+    // Manejar category_id correctamente para evitar errores de clave foránea
+    let category_id: Option<&str> = request.category_id.as_ref()
+        .filter(|&id| !id.is_empty())
+        .map(|x| x.as_str());
+    
+    info!("Category ID a insertar: {:?}", category_id);
+    
+    // Usar rusqlite::params! para manejar Option correctamente
     conn.execute(
         "INSERT INTO password_entries (id, title, username, password, url, notes, category_id, tags, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [
-            &id,
-            &serde_json::to_string(&encrypted_title).unwrap(),
-            &serde_json::to_string(&encrypted_username).unwrap(),
-            &serde_json::to_string(&encrypted_password).unwrap(),
-            &request.url.unwrap_or_default(),
-            &request.notes.unwrap_or_default(),
-            &request.category_id.unwrap_or_default(),
-            &serde_json::to_string(&request.tags).unwrap(),
-            &now,
-            &now,
+        rusqlite::params![
+            id,
+            serde_json::to_string(&encrypted_title).unwrap(),
+            serde_json::to_string(&encrypted_username).unwrap(),
+            serde_json::to_string(&encrypted_password).unwrap(),
+            request.url.unwrap_or_default(),
+            request.notes.unwrap_or_default(),
+            category_id,
+            serde_json::to_string(&request.tags).unwrap(),
+            now,
+            now,
         ],
     ).map_err(|e| format!("Error al guardar entrada: {}", e))?;
     
@@ -525,11 +534,11 @@ async fn get_password_entries(
             password,
             url: Some(row.get::<_, String>(4).unwrap()),
             notes: Some(row.get::<_, String>(5).unwrap()),
-            category_id: Some(row.get::<_, String>(6).unwrap()),
+            category_id: row.get::<_, Option<String>>(6).unwrap_or(None),
             tags: serde_json::from_str(&row.get::<_, String>(7).unwrap()).unwrap_or_default(),
             created_at: row.get::<_, String>(8).unwrap(),
             updated_at: row.get::<_, String>(9).unwrap(),
-            last_used: Some(row.get::<_, String>(10).unwrap()),
+            last_used: row.get::<_, Option<String>>(10).unwrap_or(None),
         };
         
         entries.push(entry);

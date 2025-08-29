@@ -59,7 +59,7 @@ export const usePasswordStore = create<PasswordState>((set, get) => ({
     set({ isLoading: true, error: null })
     
     try {
-      const passwords = await invoke('get_password_entries')
+      const passwords = await invoke<PasswordEntry[]>('get_password_entries')
       set({ passwords, isLoading: false })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al obtener contraseñas'
@@ -68,15 +68,20 @@ export const usePasswordStore = create<PasswordState>((set, get) => ({
   },
   
   createPassword: async (request: CreatePasswordRequest) => {
+    console.log('🔄 Frontend: createPassword iniciado con request:', request);
     set({ isLoading: true, error: null })
     
     try {
-      const id = await invoke('create_password_entry', { request })
+      console.log('🔄 Frontend: Llamando a invoke create_password_entry...');
+      const id = await invoke<string>('create_password_entry', { request })
+      console.log('✅ Frontend: Respuesta de create_password_entry recibida:', id);
       await get().fetchPasswords() // Recargar lista
       set({ isLoading: false })
       return id
     } catch (error) {
+      console.error('❌ Frontend: Error en createPassword:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error al crear contraseña'
+      console.error('❌ Frontend: Mensaje de error:', errorMessage);
       set({ error: errorMessage, isLoading: false })
       return null
     }
@@ -116,7 +121,7 @@ export const usePasswordStore = create<PasswordState>((set, get) => ({
   
   generatePassword: async (request: PasswordGenerationRequest) => {
     try {
-      const password = await invoke('generate_password', { request })
+      const password = await invoke<string>('generate_password', { request })
       return password
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al generar contraseña'
@@ -145,7 +150,7 @@ export const usePasswordStore = create<PasswordState>((set, get) => ({
     set({ isLoading: true, error: null })
     
     try {
-      const results = await invoke('search_passwords', { 
+      const results = await invoke<PasswordEntry[]>('search_passwords', { 
         request: { query, category_id: null, tags: [] } 
       })
       set({ passwords: results, isLoading: false })
