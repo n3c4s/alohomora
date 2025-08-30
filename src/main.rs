@@ -17,6 +17,7 @@ use base64::Engine;
 use log::{info, error, warn};
 use env_logger;
 use crate::sync::commands::*;
+use std::sync::Arc;
 
 /// Función de utilidad para verificar si una tabla existe
 fn table_exists(connection: &rusqlite::Connection, table_name: &str) -> bool {
@@ -36,13 +37,13 @@ fn table_exists(connection: &rusqlite::Connection, table_name: &str) -> bool {
     }
 }
 
-// Estado global de la aplicación
-struct AppState {
-    crypto_manager: Mutex<crypto::CryptoManager>,
-    database_manager: Mutex<Option<database::DatabaseManager>>,
-    is_initialized: Mutex<bool>,
-    sync_manager: Mutex<Option<sync::SyncManager>>,
-    browser_extension_manager: Mutex<Option<browser_extension::BrowserExtensionManager>>,
+/// Estado global de la aplicación
+pub struct AppState {
+    pub crypto_manager: Mutex<crypto::CryptoManager>,
+    pub database_manager: Mutex<Option<database::DatabaseManager>>,
+    pub is_initialized: Mutex<bool>,
+    pub sync_manager: Arc<Mutex<Option<sync::SyncManager>>>,
+    pub browser_extension_manager: Mutex<Option<browser_extension::BrowserExtensionManager>>,
 }
 
 impl Default for AppState {
@@ -51,7 +52,7 @@ impl Default for AppState {
             crypto_manager: Mutex::new(crypto::CryptoManager::new()),
             database_manager: Mutex::new(None),
             is_initialized: Mutex::new(false),
-            sync_manager: Mutex::new(None),
+            sync_manager: Arc::new(Mutex::new(None)),
             browser_extension_manager: Mutex::new(None),
         }
     }
@@ -146,16 +147,22 @@ fn main() {
                 })?;
             *browser_ext_state = Some(browser_extension_manager);
             info!("✅ Browser extension manager inicializado exitosamente");
-            
-            // Iniciar el gestor de extensiones
-            if let Some(manager) = browser_ext_state.as_mut() {
-                if let Err(e) = manager.start().await {
+
+            // Iniciar el gestor de extensiones en un hilo separado
+            let browser_ext_manager = browser_ext_state.as_mut().unwrap();
+            let mut manager_clone = browser_ext_manager.clone();
+            std::thread::spawn(move || {
+                if let Err(e) = tokio::runtime::Runtime::new()
+                    .unwrap()
+                    .block_on(async {
+                        manager_clone.start().await
+                    }) {
                     error!("❌ Error al iniciar browser extension manager: {}", e);
                 } else {
                     info!("✅ Browser extension manager iniciado exitosamente");
                 }
-            }
-            
+            });
+
             info!("=== FIN: Gestor de extensiones del navegador inicializado ===");
             
             Ok(())

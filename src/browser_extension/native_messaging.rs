@@ -9,6 +9,7 @@ use std::time::Duration;
 use tokio::sync::mpsc;
 
 /// Gestor de la extensión del navegador
+#[derive(Clone)]
 pub struct BrowserExtensionManager {
     is_running: Arc<Mutex<bool>>,
     sync_manager: Arc<Mutex<Option<SyncManager>>>,
@@ -72,7 +73,7 @@ impl BrowserExtensionManager {
             thread::sleep(Duration::from_secs(5));
             
             // Simular mensajes de prueba
-            if let Ok(mut conns) = connections.lock() {
+            if let Ok(conns) = connections.lock() {
                 if conns.is_empty() {
                     info!("🔌 AlohoPass: Esperando conexiones del plugin...");
                 }
@@ -150,7 +151,7 @@ impl BrowserExtensionManager {
                 username: "trabajo@empresa.com".to_string(),
                 email: Some("trabajo@empresa.com".to_string()),
                 url: format!("https://{}", domain),
-                domain,
+                domain: domain.clone(),
                 category: Some("Trabajo".to_string()),
                 created_at: chrono::Utc::now().to_rfc3339(),
                 updated_at: chrono::Utc::now().to_rfc3339(),

@@ -108,7 +108,7 @@ pub struct BrowserPassword {
 }
 
 /// Configuración del plugin
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PluginConfig {
     pub auto_fill_enabled: bool,
     pub show_indicators: bool,
