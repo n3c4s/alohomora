@@ -1,4 +1,5 @@
 use crate::sync::{SyncManager, SyncConfig, SyncStatus, SyncStats, DeviceInfo};
+use crate::AppState;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use tauri::State;
@@ -24,11 +25,11 @@ pub struct DeviceRemoveRequest {
 /// Obtener la configuración actual de sincronización
 #[tauri::command]
 pub async fn get_sync_config(
-    sync_manager: State<'_, Mutex<Option<SyncManager>>>
+    state: State<'_, AppState>
 ) -> Result<SyncConfig, String> {
-    let manager = sync_manager.lock().map_err(|e| e.to_string())?;
+    let manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
     
-    if let Some(manager) = manager.as_ref() {
+    if let Some(_manager) = manager.as_ref() {
         // Por ahora retornamos configuración por defecto
         Ok(SyncConfig::default())
     } else {
@@ -39,11 +40,11 @@ pub async fn get_sync_config(
 /// Obtener el estado actual de sincronización
 #[tauri::command]
 pub async fn get_sync_status(
-    sync_manager: State<'_, Mutex<Option<SyncManager>>>
+    state: State<'_, AppState>
 ) -> Result<SyncStatus, String> {
-    let manager = sync_manager.lock().map_err(|e| e.to_string())?;
+    let manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
     
-    if let Some(manager) = manager.as_ref() {
+    if let Some(_manager) = manager.as_ref() {
         // Por ahora retornamos estado por defecto
         Ok(SyncStatus::default())
     } else {
@@ -54,11 +55,11 @@ pub async fn get_sync_status(
 /// Obtener dispositivos sincronizados
 #[tauri::command]
 pub async fn get_sync_devices(
-    sync_manager: State<'_, Mutex<Option<SyncManager>>>
+    state: State<'_, AppState>
 ) -> Result<Vec<DeviceInfo>, String> {
-    let manager = sync_manager.lock().map_err(|e| e.to_string())?;
+    let manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
     
-    if let Some(manager) = manager.as_ref() {
+    if let Some(_manager) = manager.as_ref() {
         // Por ahora retornamos lista vacía
         Ok(Vec::new())
     } else {
@@ -69,11 +70,11 @@ pub async fn get_sync_devices(
 /// Obtener estadísticas de sincronización
 #[tauri::command]
 pub async fn get_sync_stats(
-    sync_manager: State<'_, Mutex<Option<SyncManager>>>
+    state: State<'_, AppState>
 ) -> Result<SyncStats, String> {
-    let manager = sync_manager.lock().map_err(|e| e.to_string())?;
+    let manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
     
-    if let Some(manager) = manager.as_ref() {
+    if let Some(_manager) = manager.as_ref() {
         // Por ahora retornamos estadísticas por defecto
         Ok(SyncStats::default())
     } else {
@@ -84,11 +85,11 @@ pub async fn get_sync_stats(
 /// Iniciar sincronización
 #[tauri::command]
 pub async fn start_sync(
-    sync_manager: State<'_, Mutex<Option<SyncManager>>>
+    state: State<'_, AppState>
 ) -> Result<(), String> {
-    let mut manager = sync_manager.lock().map_err(|e| e.to_string())?;
+    let mut manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
     
-    if let Some(manager) = manager.as_mut() {
+    if let Some(_manager) = manager.as_mut() {
         // Por ahora solo simulamos éxito
         log::info!("Sincronización iniciada");
         Ok(())
@@ -100,11 +101,11 @@ pub async fn start_sync(
 /// Detener sincronización
 #[tauri::command]
 pub async fn stop_sync(
-    sync_manager: State<'_, Mutex<Option<SyncManager>>>
+    state: State<'_, AppState>
 ) -> Result<(), String> {
-    let mut manager = sync_manager.lock().map_err(|e| e.to_string())?;
+    let mut manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
     
-    if let Some(manager) = manager.as_mut() {
+    if let Some(_manager) = manager.as_mut() {
         // Por ahora solo simulamos éxito
         log::info!("Sincronización detenida");
         Ok(())
@@ -116,11 +117,11 @@ pub async fn stop_sync(
 /// Iniciar descubrimiento de dispositivos
 #[tauri::command]
 pub async fn start_device_discovery(
-    sync_manager: State<'_, Mutex<Option<SyncManager>>>
+    state: State<'_, AppState>
 ) -> Result<(), String> {
-    let manager = sync_manager.lock().map_err(|e| e.to_string())?;
+    let manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
     
-    if let Some(manager) = manager.as_ref() {
+    if let Some(_manager) = manager.as_ref() {
         // Por ahora solo simulamos éxito
         log::info!("Descubrimiento de dispositivos iniciado");
         Ok(())
@@ -132,11 +133,11 @@ pub async fn start_device_discovery(
 /// Sincronizar ahora
 #[tauri::command]
 pub async fn sync_now(
-    sync_manager: State<'_, Mutex<Option<SyncManager>>>
+    state: State<'_, AppState>
 ) -> Result<(), String> {
-    let manager = sync_manager.lock().map_err(|e| e.to_string())?;
+    let manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
     
-    if let Some(manager) = manager.as_ref() {
+    if let Some(_manager) = manager.as_ref() {
         // Por ahora solo simulamos éxito
         log::info!("Sincronización manual iniciada");
         Ok(())
@@ -148,12 +149,12 @@ pub async fn sync_now(
 /// Actualizar configuración de sincronización
 #[tauri::command]
 pub async fn update_sync_config(
-    sync_manager: State<'_, Mutex<Option<SyncManager>>>,
+    state: State<'_, AppState>,
     config: SyncConfigUpdate
 ) -> Result<(), String> {
-    let mut manager = sync_manager.lock().map_err(|e| e.to_string())?;
+    let mut manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
     
-    if let Some(manager) = manager.as_mut() {
+    if let Some(_manager) = manager.as_mut() {
         // Por ahora solo simulamos éxito
         log::info!("Configuración actualizada: {:?}", config);
         Ok(())
@@ -165,12 +166,12 @@ pub async fn update_sync_config(
 /// Confiar en un dispositivo
 #[tauri::command]
 pub async fn trust_device(
-    sync_manager: State<'_, Mutex<Option<SyncManager>>>,
+    state: State<'_, AppState>,
     request: DeviceTrustRequest
 ) -> Result<(), String> {
-    let manager = sync_manager.lock().map_err(|e| e.to_string())?;
+    let manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
     
-    if let Some(manager) = manager.as_ref() {
+    if let Some(_manager) = manager.as_ref() {
         // Por ahora solo simulamos éxito
         log::info!("Dispositivo marcado como confiable: {}", request.device_id);
         Ok(())
@@ -182,12 +183,12 @@ pub async fn trust_device(
 /// Remover un dispositivo
 #[tauri::command]
 pub async fn remove_device(
-    sync_manager: State<'_, Mutex<Option<SyncManager>>>,
+    state: State<'_, AppState>,
     request: DeviceRemoveRequest
 ) -> Result<(), String> {
-    let manager = sync_manager.lock().map_err(|e| e.to_string())?;
+    let manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
     
-    if let Some(manager) = manager.as_ref() {
+    if let Some(_manager) = manager.as_ref() {
         // Por ahora solo simulamos éxito
         log::info!("Dispositivo removido: {}", request.device_id);
         Ok(())

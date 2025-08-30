@@ -100,11 +100,33 @@ fn main() {
             // Inicializar el gestor de sincronización
             info!("Inicializando gestor de sincronización...");
             let sync_manager = sync::SyncManager::new_default();
+            info!("SyncManager creado exitosamente");
+            
             let state = app.state::<AppState>();
+            info!("Estado de la aplicación obtenido");
+            
             let mut sync_state = state.sync_manager.lock()
-                .map_err(|_| "Error al acceder al sync manager")?;
+                .map_err(|e| {
+                    error!("Error al acceder al sync manager: {:?}", e);
+                    "Error al acceder al sync manager"
+                })?;
+            info!("Lock del sync manager obtenido");
+            
             *sync_state = Some(sync_manager);
-            info!("Sync manager inicializado exitosamente");
+            info!("Sync manager inicializado exitosamente en el estado");
+            
+            // Verificar que se guardó correctamente
+            drop(sync_state);
+            let sync_state_check = state.sync_manager.lock()
+                .map_err(|e| {
+                    error!("Error al verificar sync manager: {:?}", e);
+                    "Error al verificar sync manager"
+                })?;
+            if sync_state_check.is_some() {
+                info!("✅ SyncManager verificado en el estado");
+            } else {
+                error!("❌ SyncManager NO está en el estado");
+            }
             
             Ok(())
         })
