@@ -15,6 +15,7 @@ use serde_json;
 use base64::Engine;
 use log::{info, error, warn};
 use env_logger;
+use crate::sync::commands::*;
 
 /// Función de utilidad para verificar si una tabla existe
 fn table_exists(connection: &rusqlite::Connection, table_name: &str) -> bool {
@@ -96,6 +97,15 @@ fn main() {
             // Emitir evento de inicialización
             app_handle.emit_all("app-ready", ()).unwrap();
             
+            // Inicializar el gestor de sincronización
+            info!("Inicializando gestor de sincronización...");
+            let sync_manager = sync::SyncManager::new_default();
+            let state = app.state::<AppState>();
+            let mut sync_state = state.sync_manager.lock()
+                .map_err(|_| "Error al acceder al sync manager")?;
+            *sync_state = Some(sync_manager);
+            info!("Sync manager inicializado exitosamente");
+            
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -137,6 +147,19 @@ fn main() {
             save_autocomplete_data,
             get_active_browser_url,
             check_database_status,
+
+            // Sincronización
+            get_sync_config,
+            get_sync_status,
+            get_sync_devices,
+            get_sync_stats,
+            start_sync,
+            stop_sync,
+            start_device_discovery,
+            sync_now,
+            update_sync_config,
+            trust_device,
+            remove_device,
         ])
         .run(tauri::generate_context!())
         .expect("Error al ejecutar la aplicación");

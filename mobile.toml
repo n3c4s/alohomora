@@ -1,0 +1,8 @@
+[app]
+name = "alohopass"
+stylized-name = "AlohoPass"
+domain = "alohopass.com"
+template-pack = "bevy"
+
+[apple]
+development-team = "WTWVBKRMPC"

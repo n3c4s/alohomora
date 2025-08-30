@@ -185,9 +185,7 @@ impl SyncManager {
             
             while let Some(event) = receiver.recv().await {
                 // Manejar evento
-                if let Err(e) = event_handler.handle_sync_event(event.clone()).await {
-                    log::error!("Error al manejar evento: {}", e);
-                }
+                event_handler.handle_event(&event);
 
                 // Procesar evento localmente
                 if let Err(e) = Self::process_event_locally(
@@ -487,12 +485,16 @@ struct DiscoveryEventHandler {
 
 #[async_trait]
 impl SyncEventHandler for DiscoveryEventHandler {
-    async fn handle_sync_event(&self, event: SyncEvent) -> Result<()> {
+    fn handle_event(&self, event: &SyncEvent) {
         // Reenviar evento al gestor principal
-        if let Err(e) = self.event_sender.send(event).await {
-            log::error!("Error al reenviar evento: {}", e);
-        }
-        Ok(())
+        let event_clone = event.clone();
+        let event_sender = self.event_sender.clone();
+        
+        tokio::spawn(async move {
+            if let Err(e) = event_sender.send(event_clone).await {
+                log::error!("Error al reenviar evento: {}", e);
+            }
+        });
     }
 }
 

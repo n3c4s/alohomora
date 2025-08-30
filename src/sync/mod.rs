@@ -6,43 +6,118 @@
 //! - Sincronización inteligente de contraseñas
 //! - Fallback en la nube encriptado
 
+pub mod device_info;
 pub mod discovery;
 pub mod p2p_connection;
 pub mod smart_sync;
-pub mod device_info;
 pub mod sync_manager;
+pub mod commands;
 
+pub use device_info::{DeviceInfo, DeviceType, DeviceStatus};
 pub use discovery::DeviceDiscovery;
 pub use p2p_connection::P2PConnection;
 pub use smart_sync::SmartSync;
-pub use device_info::{DeviceInfo, DeviceStatus, DeviceType};
 pub use sync_manager::SyncManager;
+pub use commands::*;
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use tokio::sync::RwLock;
-use anyhow::Result;
+use std::time::Duration;
 
-/// Estado general del sistema de sincronización
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SyncEvent {
+    DeviceDiscovered(DeviceInfo),
+    DeviceConnected(DeviceInfo),
+    DeviceDisconnected(DeviceInfo),
+    SyncStarted(DeviceInfo),
+    SyncCompleted(DeviceInfo, u64),
+    SyncFailed(DeviceInfo, String),
+    ChangesDetected(u64),
+    Heartbeat,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncConfig {
+    pub auto_sync: bool,
+    pub sync_interval: u64, // en minutos
+    pub discovery_enabled: bool,
+    pub allow_incoming_connections: bool,
+    pub auto_discovery: bool, // para compatibilidad
+}
+
+impl Default for SyncConfig {
+    fn default() -> Self {
+        Self {
+            auto_sync: true,
+            sync_interval: 15,
+            discovery_enabled: true,
+            allow_incoming_connections: true,
+            auto_discovery: true,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncStatus {
     pub is_enabled: bool,
-    pub connected_devices: Vec<DeviceInfo>,
-    pub last_sync: Option<chrono::DateTime<chrono::Utc>>,
-    pub sync_method: SyncMethod,
-    pub auto_sync: bool,
+    pub is_syncing: bool,
+    pub last_sync_time: Option<String>,
+    pub error: Option<String>,
+    pub connected_devices: Vec<DeviceInfo>, // Cambiado de u32 a Vec<DeviceInfo>
+    pub last_sync: Option<chrono::DateTime<chrono::Utc>>, // para compatibilidad
+    pub sync_method: SyncMethod, // para compatibilidad
+    pub auto_sync: bool, // para compatibilidad
 }
 
-/// Métodos de sincronización disponibles
+impl Default for SyncStatus {
+    fn default() -> Self {
+        Self {
+            is_enabled: false,
+            is_syncing: false,
+            last_sync_time: None,
+            error: None,
+            connected_devices: Vec::new(),
+            last_sync: None,
+            sync_method: SyncMethod::Hybrid,
+            auto_sync: true,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncStats {
+    pub total_passwords: u64,
+    pub synced_passwords: u64,
+    pub last_sync_duration: u64, // en segundos
+    pub devices_count: u32,
+    // Campos para compatibilidad
+    pub total_syncs: u64,
+    pub successful_syncs: u64,
+    pub failed_syncs: u64,
+    pub total_data_synced: u64,
+    pub devices_synced_with: Vec<String>,
+}
+
+impl Default for SyncStats {
+    fn default() -> Self {
+        Self {
+            total_passwords: 0,
+            synced_passwords: 0,
+            last_sync_duration: 0,
+            devices_count: 0,
+            total_syncs: 0,
+            successful_syncs: 0,
+            failed_syncs: 0,
+            total_data_synced: 0,
+            devices_synced_with: Vec::new(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum SyncMethod {
-    /// Sincronización P2P directa (más segura)
     P2P,
-    /// Sincronización a través de la nube encriptada (fallback)
     CloudEncrypted,
-    /// Sincronización híbrida (P2P + fallback en la nube)
     Hybrid,
-    /// Solo sincronización local
     LocalOnly,
 }
 
@@ -52,122 +127,6 @@ impl Default for SyncMethod {
     }
 }
 
-/// Configuración del sistema de sincronización
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncConfig {
-    pub auto_discovery: bool,
-    pub auto_sync: bool,
-    pub sync_interval: u64, // en segundos
-    pub max_devices: usize,
-    pub encryption_level: EncryptionLevel,
-    pub allowed_networks: Vec<String>, // redes WiFi permitidas
-}
-
-/// Niveles de encriptación para sincronización
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum EncryptionLevel {
-    /// Encriptación básica (AES-128)
-    Basic,
-    /// Encriptación estándar (AES-256)
-    Standard,
-    /// Encriptación militar (AES-256 + ChaCha20-Poly1305)
-    Military,
-}
-
-impl Default for EncryptionLevel {
-    fn default() -> Self {
-        EncryptionLevel::Military
-    }
-}
-
-/// Eventos de sincronización
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum SyncEvent {
-    /// Dispositivo descubierto
-    DeviceDiscovered(DeviceInfo),
-    /// Dispositivo conectado
-    DeviceConnected(DeviceInfo),
-    /// Dispositivo desconectado
-    DeviceDisconnected(DeviceInfo),
-    /// Sincronización iniciada
-    SyncStarted(DeviceInfo),
-    /// Sincronización completada
-    SyncCompleted(DeviceInfo, u64), // número de elementos sincronizados
-    /// Sincronización falló
-    SyncFailed(DeviceInfo, String), // mensaje de error
-    /// Cambios detectados
-    ChangesDetected(u64), // número de cambios
-    /// Heartbeat del dispositivo
-    Heartbeat,
-}
-
-/// Estadísticas de sincronización
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncStats {
-    pub total_syncs: u64,
-    pub successful_syncs: u64,
-    pub failed_syncs: u64,
-    pub total_data_synced: u64, // en bytes
-    pub last_sync_duration: Option<u64>, // en milisegundos
-    pub devices_synced_with: Vec<String>, // IDs de dispositivos
-}
-
-impl Default for SyncStats {
-    fn default() -> Self {
-        Self {
-            total_syncs: 0,
-            successful_syncs: 0,
-            failed_syncs: 0,
-            total_data_synced: 0,
-            last_sync_duration: None,
-            devices_synced_with: Vec::new(),
-        }
-    }
-}
-
-/// Trait para manejar eventos de sincronización
-#[async_trait::async_trait]
-pub trait SyncEventHandler: Send + Sync {
-    async fn handle_sync_event(&self, event: SyncEvent) -> Result<()>;
-}
-
-/// Implementación por defecto del manejador de eventos
-pub struct DefaultSyncEventHandler;
-
-#[async_trait::async_trait]
-impl SyncEventHandler for DefaultSyncEventHandler {
-    async fn handle_sync_event(&self, event: SyncEvent) -> Result<()> {
-        match event {
-            SyncEvent::DeviceDiscovered(device) => {
-                log::info!("Dispositivo descubierto: {} ({:?})", device.name, device.device_type);
-            }
-            SyncEvent::DeviceConnected(device) => {
-                log::info!("Dispositivo conectado: {} ({:?})", device.name, device.device_type);
-            }
-            SyncEvent::DeviceDisconnected(device) => {
-                log::info!("Dispositivo desconectado: {} ({:?})", device.name, device.device_type);
-            }
-            SyncEvent::SyncStarted(device) => {
-                log::info!("Sincronización iniciada con: {} ({:?})", device.name, device.device_type);
-            }
-            SyncEvent::SyncCompleted(device, count) => {
-                log::info!("Sincronización completada con: {} ({} elementos)", device.name, count);
-            }
-            SyncEvent::SyncFailed(device, error) => {
-                log::error!("Sincronización falló con: {} - Error: {}", device.name, error);
-            }
-            SyncEvent::ChangesDetected(count) => {
-                log::info!("Cambios detectados: {} elementos", count);
-            }
-            SyncEvent::Heartbeat => {
-                log::debug!("Heartbeat recibido");
-            }
-        }
-        Ok(())
-    }
-}
-
-/// Resultado de una operación de sincronización
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncResult {
     pub success: bool,
@@ -202,29 +161,39 @@ impl SyncResult {
     }
 }
 
-/// Configuración por defecto del sistema de sincronización
-impl Default for SyncConfig {
-    fn default() -> Self {
-        Self {
-            auto_discovery: true,
-            auto_sync: true,
-            sync_interval: 300, // 5 minutos
-            max_devices: 10,
-            encryption_level: EncryptionLevel::Military,
-            allowed_networks: Vec::new(), // todas las redes permitidas por defecto
-        }
-    }
+pub trait SyncEventHandler: Send + Sync {
+    fn handle_event(&self, event: &SyncEvent);
 }
 
-/// Configuración por defecto del estado de sincronización
-impl Default for SyncStatus {
-    fn default() -> Self {
-        Self {
-            is_enabled: true,
-            connected_devices: Vec::new(),
-            last_sync: None,
-            sync_method: SyncMethod::Hybrid,
-            auto_sync: true,
+pub struct DefaultSyncEventHandler;
+
+impl SyncEventHandler for DefaultSyncEventHandler {
+    fn handle_event(&self, event: &SyncEvent) {
+        match event {
+            SyncEvent::DeviceDiscovered(device) => {
+                log::info!("Dispositivo descubierto: {}", device.name);
+            }
+            SyncEvent::DeviceConnected(device) => {
+                log::info!("Dispositivo conectado: {}", device.name);
+            }
+            SyncEvent::DeviceDisconnected(device) => {
+                log::info!("Dispositivo desconectado: {}", device.name);
+            }
+            SyncEvent::SyncStarted(device) => {
+                log::info!("Sincronización iniciada con: {}", device.name);
+            }
+            SyncEvent::SyncCompleted(device, count) => {
+                log::info!("Sincronización completada con: {} ({} elementos)", device.name, count);
+            }
+            SyncEvent::SyncFailed(device, error) => {
+                log::error!("Sincronización falló con: {} - Error: {}", device.name, error);
+            }
+            SyncEvent::ChangesDetected(count) => {
+                log::info!("Cambios detectados: {} elementos", count);
+            }
+            SyncEvent::Heartbeat => {
+                log::debug!("Heartbeat de sincronización");
+            }
         }
     }
 }

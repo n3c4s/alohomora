@@ -4,52 +4,41 @@ import { invoke } from '@tauri-apps/api/tauri';
 export interface DeviceInfo {
   id: string;
   name: string;
-  device_type: string;
-  os: string;
-  os_version: string;
-  app_version: string;
-  status: string;
-  last_seen: string;
-  is_trusted: boolean;
-  ip_address?: string;
-  port?: number;
+  type: 'desktop' | 'mobile' | 'tablet';
+  lastSeen: string;
+  isTrusted: boolean;
+  isOnline: boolean;
 }
 
 export interface SyncStatus {
-  is_enabled: boolean;
-  connected_devices: DeviceInfo[];
-  last_sync: string | null;
-  sync_method: string;
-  auto_sync: boolean;
+  isEnabled: boolean;
+  isSyncing: boolean;
+  lastSyncTime: string | null;
+  error: string | null;
+  connectedDevices: number;
 }
 
 export interface SyncConfig {
-  auto_discovery: boolean;
-  auto_sync: boolean;
-  sync_interval: number;
-  max_devices: number;
-  encryption_level: string;
-  allowed_networks: string[];
+  autoSync: boolean;
+  syncInterval: number; // en minutos
+  discoveryEnabled: boolean;
+  allowIncomingConnections: boolean;
 }
 
 export interface SyncStats {
-  total_syncs: number;
-  successful_syncs: number;
-  failed_syncs: number;
-  total_data_synced: number;
-  last_sync_duration?: number;
-  devices_synced_with: string[];
+  totalPasswords: number;
+  syncedPasswords: number;
+  lastSyncDuration: number; // en segundos
+  devicesCount: number;
 }
 
 interface SyncStore {
   // Estado
-  syncStatus: SyncStatus | null;
-  syncConfig: SyncConfig | null;
-  discoveredDevices: DeviceInfo[];
-  syncStats: SyncStats | null;
-  isLoading: boolean;
-  error: string | null;
-
+  status: SyncStatus;
+  config: SyncConfig;
+  stats: SyncStats;
+  devices: DeviceInfo[];
+  
   // Acciones
   loadSyncData: () => Promise<void>;
   toggleSync: () => Promise<void>;
@@ -63,216 +52,166 @@ interface SyncStore {
 
 export const useSyncStore = create<SyncStore>((set, get) => ({
   // Estado inicial
-  syncStatus: null,
-  syncConfig: null,
-  discoveredDevices: [],
-  syncStats: null,
-  isLoading: false,
-  error: null,
-
-  // Cargar datos de sincronización
+  status: {
+    isEnabled: false,
+    isSyncing: false,
+    lastSyncTime: null,
+    error: null,
+    connectedDevices: 0,
+  },
+  
+  config: {
+    autoSync: true,
+    syncInterval: 15,
+    discoveryEnabled: true,
+    allowIncomingConnections: true,
+  },
+  
+  stats: {
+    totalPasswords: 0,
+    syncedPasswords: 0,
+    lastSyncDuration: 0,
+    devicesCount: 0,
+  },
+  
+  devices: [],
+  
+  // Acciones
   loadSyncData: async () => {
     try {
-      set({ isLoading: true, error: null });
+      // Cargar configuración desde el backend
+      const config = await invoke('get_sync_config');
+      const status = await invoke('get_sync_status');
+      const devices = await invoke('get_sync_devices');
+      const stats = await invoke('get_sync_stats');
       
-      // TODO: Implementar llamadas reales a Tauri
-      // Por ahora usamos datos de ejemplo
-      const mockStatus: SyncStatus = {
-        is_enabled: true,
-        connected_devices: [
-          {
-            id: '1',
-            name: 'MacBook-Pro-de-Charly',
-            device_type: 'Laptop',
-            os: 'macOS',
-            os_version: '14.0',
-            app_version: '1.0.0',
-            status: 'Connected',
-            last_seen: new Date().toISOString(),
-            is_trusted: true
-          }
-        ],
-        last_sync: new Date(Date.now() - 300000).toISOString(),
-        sync_method: 'Hybrid',
-        auto_sync: true
-      };
-
-      const mockConfig: SyncConfig = {
-        auto_discovery: true,
-        auto_sync: true,
-        sync_interval: 300,
-        max_devices: 10,
-        encryption_level: 'Military',
-        allowed_networks: ['WiFi Casa', 'WiFi Trabajo']
-      };
-
-      const mockDiscovered: DeviceInfo[] = [
-        {
-          id: '2',
-          name: 'iPhone-Charly',
-          device_type: 'Mobile',
-          os: 'iOS',
-          os_version: '17.0',
-          app_version: '1.0.0',
-          status: 'Discovered',
-          last_seen: new Date(Date.now() - 60000).toISOString(),
-          is_trusted: false
-        },
-        {
-          id: '3',
-          name: 'PC-Windows',
-          device_type: 'Desktop',
-          os: 'Windows',
-          os_version: '11',
-          app_version: '1.0.0',
-          status: 'Discovered',
-          last_seen: new Date(Date.now() - 120000).toISOString(),
-          is_trusted: false
-        }
-      ];
-
-      const mockStats: SyncStats = {
-        total_syncs: 156,
-        successful_syncs: 148,
-        failed_syncs: 8,
-        total_data_synced: 2048576, // 2MB
-        last_sync_duration: 1250,
-        devices_synced_with: ['MacBook-Pro-de-Charly', 'iPhone-Charly']
-      };
-
-      set({
-        syncStatus: mockStatus,
-        syncConfig: mockConfig,
-        discoveredDevices: mockDiscovered,
-        syncStats: mockStats,
-        isLoading: false
-      });
+      set({ config, status, devices, stats });
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Error desconocido',
-        isLoading: false 
-      });
+      console.error('Error loading sync data:', error);
+      set(state => ({
+        status: { ...state.status, error: 'Error loading sync data' }
+      }));
     }
   },
-
-  // Alternar sincronización
+  
   toggleSync: async () => {
     try {
-      const { syncStatus } = get();
-      if (!syncStatus) return;
-
-      // TODO: Implementar llamada a Tauri
-      const newStatus = !syncStatus.is_enabled;
+      const currentStatus = get().status.isEnabled;
+      const newStatus = !currentStatus;
       
-      set({
-        syncStatus: {
-          ...syncStatus,
-          is_enabled: newStatus
-        }
-      });
-
-      console.log(`Sincronización ${newStatus ? 'activada' : 'desactivada'}`);
+      if (newStatus) {
+        await invoke('start_sync');
+      } else {
+        await invoke('stop_sync');
+      }
+      
+      set(state => ({
+        status: { ...state.status, isEnabled: newStatus }
+      }));
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Error al alternar sincronización'
-      });
+      console.error('Error toggling sync:', error);
+      set(state => ({
+        status: { ...state.status, error: 'Error toggling sync' }
+      }));
     }
   },
-
-  // Iniciar descubrimiento
+  
   startDiscovery: async () => {
     try {
-      set({ error: null });
+      set(state => ({
+        status: { ...state.status, isSyncing: true }
+      }));
       
-      // TODO: Implementar llamada a Tauri
-      console.log('Iniciando descubrimiento de dispositivos...');
+      await invoke('start_device_discovery');
       
-      // Simular descubrimiento
-      setTimeout(() => {
-        get().loadSyncData();
-      }, 2000);
+      // Actualizar dispositivos descubiertos
+      const devices = await invoke('get_sync_devices');
+      set({ devices });
+      
+      set(state => ({
+        status: { ...state.status, isSyncing: false }
+      }));
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Error al iniciar descubrimiento'
-      });
+      console.error('Error starting discovery:', error);
+      set(state => ({
+        status: { ...state.status, error: 'Error starting discovery', isSyncing: false }
+      }));
     }
   },
-
-  // Sincronizar ahora
+  
   syncNow: async () => {
     try {
-      set({ error: null });
+      set(state => ({
+        status: { ...state.status, isSyncing: true }
+      }));
       
-      // TODO: Implementar llamada a Tauri
-      console.log('Iniciando sincronización manual...');
+      const startTime = Date.now();
+      await invoke('sync_now');
+      const duration = (Date.now() - startTime) / 1000;
       
-      // Simular sincronización
-      setTimeout(() => {
-        get().loadSyncData();
-      }, 1500);
+      // Actualizar estadísticas
+      const stats = await invoke('get_sync_stats');
+      const status = await invoke('get_sync_status');
+      
+      set({ stats: { ...stats, lastSyncDuration: duration }, status });
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Error al sincronizar'
-      });
+      console.error('Error syncing now:', error);
+      set(state => ({
+        status: { ...state.status, error: 'Error syncing now', isSyncing: false }
+      }));
     }
   },
-
-  // Actualizar configuración
-  updateConfig: async (config: Partial<SyncConfig>) => {
+  
+  updateConfig: async (newConfig: Partial<SyncConfig>) => {
     try {
-      const { syncConfig } = get();
-      if (!syncConfig) return;
-
-      // TODO: Implementar llamada a Tauri
-      const newConfig = { ...syncConfig, ...config };
-      
-      set({ syncConfig: newConfig });
-      console.log('Configuración actualizada:', newConfig);
+      const updatedConfig = { ...get().config, ...newConfig };
+      await invoke('update_sync_config', { config: updatedConfig });
+      set({ config: updatedConfig });
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Error al actualizar configuración'
-      });
+      console.error('Error updating config:', error);
+      set(state => ({
+        status: { ...state.status, error: 'Error updating config' }
+      }));
     }
   },
-
-  // Confiar en dispositivo
+  
   trustDevice: async (deviceId: string) => {
     try {
-      const { discoveredDevices } = get();
+      await invoke('trust_device', { deviceId });
       
-      // TODO: Implementar llamada a Tauri
-      const updatedDevices = discoveredDevices.map(device =>
-        device.id === deviceId 
-          ? { ...device, is_trusted: true, status: 'Connected' }
-          : device
-      );
-      
-      set({ discoveredDevices: updatedDevices });
-      console.log(`Dispositivo ${deviceId} marcado como confiable`);
+      // Actualizar estado del dispositivo
+      set(state => ({
+        devices: state.devices.map(device =>
+          device.id === deviceId ? { ...device, isTrusted: true } : device
+        )
+      }));
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Error al confiar en dispositivo'
-      });
+      console.error('Error trusting device:', error);
+      set(state => ({
+        status: { ...state.status, error: 'Error trusting device' }
+      }));
     }
   },
-
-  // Eliminar dispositivo
+  
   removeDevice: async (deviceId: string) => {
     try {
-      const { discoveredDevices } = get();
+      await invoke('remove_device', { deviceId });
       
-      // TODO: Implementar llamada a Tauri
-      const updatedDevices = discoveredDevices.filter(device => device.id !== deviceId);
-      
-      set({ discoveredDevices: updatedDevices });
-      console.log(`Dispositivo ${deviceId} eliminado`);
+      // Remover dispositivo de la lista
+      set(state => ({
+        devices: state.devices.filter(device => device.id !== deviceId)
+      }));
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Error al eliminar dispositivo'
-      });
+      console.error('Error removing device:', error);
+      set(state => ({
+        status: { ...state.status, error: 'Error removing device' }
+      }));
     }
   },
-
-  // Limpiar error
-  clearError: () => set({ error: null })
+  
+  clearError: () => {
+    set(state => ({
+      status: { ...state.status, error: null }
+    }));
+  },
 }));
