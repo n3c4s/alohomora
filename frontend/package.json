@@ -25,7 +25,9 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite",
+    "dev:tauri": "vite",
     "build": "vite build",
+    "build:tauri": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },

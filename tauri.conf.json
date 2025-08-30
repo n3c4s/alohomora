@@ -1,7 +1,7 @@
 {
   "build": {
-    "beforeDevCommand": "powershell -Command \"cd frontend; npm run dev\"",
-    "beforeBuildCommand": "powershell -Command \"cd frontend; npm run build\"",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
     "devPath": "http://localhost:5173",
     "distDir": "frontend/dist"
   },
