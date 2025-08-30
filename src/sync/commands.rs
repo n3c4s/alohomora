@@ -3,6 +3,7 @@ use crate::AppState;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use tauri::State;
+use std::sync::Arc;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SyncConfigUpdate {
@@ -27,14 +28,9 @@ pub struct DeviceRemoveRequest {
 pub async fn get_sync_config(
     state: State<'_, AppState>
 ) -> Result<SyncConfig, String> {
-    let manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
-    
-    if let Some(_manager) = manager.as_ref() {
-        // Por ahora retornamos configuración por defecto
-        Ok(SyncConfig::default())
-    } else {
-        Err("Sync manager not initialized".to_string())
-    }
+    // Por ahora retornamos configuración por defecto
+    // TODO: Implementar cuando el SyncManager esté completamente funcional
+    Ok(SyncConfig::default())
 }
 
 /// Obtener el estado actual de sincronización
@@ -42,14 +38,9 @@ pub async fn get_sync_config(
 pub async fn get_sync_status(
     state: State<'_, AppState>
 ) -> Result<SyncStatus, String> {
-    let manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
-    
-    if let Some(_manager) = manager.as_ref() {
-        // Por ahora retornamos estado por defecto
-        Ok(SyncStatus::default())
-    } else {
-        Err("Sync manager not initialized".to_string())
-    }
+    // Por ahora retornamos estado por defecto
+    // TODO: Implementar cuando el SyncManager esté completamente funcional
+    Ok(SyncStatus::default())
 }
 
 /// Obtener dispositivos sincronizados
@@ -57,14 +48,9 @@ pub async fn get_sync_status(
 pub async fn get_sync_devices(
     state: State<'_, AppState>
 ) -> Result<Vec<DeviceInfo>, String> {
-    let manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
-    
-    if let Some(_manager) = manager.as_ref() {
-        // Por ahora retornamos lista vacía
-        Ok(Vec::new())
-    } else {
-        Err("Sync manager not initialized".to_string())
-    }
+    // Por ahora retornamos lista vacía
+    // TODO: Implementar cuando el SyncManager esté completamente funcional
+    Ok(Vec::new())
 }
 
 /// Obtener estadísticas de sincronización
@@ -72,14 +58,9 @@ pub async fn get_sync_devices(
 pub async fn get_sync_stats(
     state: State<'_, AppState>
 ) -> Result<SyncStats, String> {
-    let manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
-    
-    if let Some(_manager) = manager.as_ref() {
-        // Por ahora retornamos estadísticas por defecto
-        Ok(SyncStats::default())
-    } else {
-        Err("Sync manager not initialized".to_string())
-    }
+    // Por ahora retornamos estadísticas por defecto
+    // TODO: Implementar cuando el SyncManager esté completamente funcional
+    Ok(SyncStats::default())
 }
 
 /// Iniciar sincronización
@@ -87,15 +68,10 @@ pub async fn get_sync_stats(
 pub async fn start_sync(
     state: State<'_, AppState>
 ) -> Result<(), String> {
-    let mut manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
-    
-    if let Some(_manager) = manager.as_mut() {
-        // Por ahora solo simulamos éxito
-        log::info!("Sincronización iniciada");
-        Ok(())
-    } else {
-        Err("Sync manager not initialized".to_string())
-    }
+    // Por ahora solo simulamos éxito
+    // TODO: Implementar cuando el SyncManager esté completamente funcional
+    log::info!("Sincronización iniciada (simulada)");
+    Ok(())
 }
 
 /// Detener sincronización
@@ -103,15 +79,10 @@ pub async fn start_sync(
 pub async fn stop_sync(
     state: State<'_, AppState>
 ) -> Result<(), String> {
-    let mut manager = state.sync_manager.lock().map_err(|e| e.to_string())?;
-    
-    if let Some(_manager) = manager.as_mut() {
-        // Por ahora solo simulamos éxito
-        log::info!("Sincronización detenida");
-        Ok(())
-    } else {
-        Err("Sync manager not initialized".to_string())
-    }
+    // Por ahora solo simulamos éxito
+    // TODO: Implementar cuando el SyncManager esté completamente funcional
+    log::info!("Sincronización detenida (simulada)");
+    Ok(())
 }
 
 /// Iniciar descubrimiento de dispositivos

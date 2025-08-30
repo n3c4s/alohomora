@@ -450,6 +450,27 @@ impl SyncManager {
         *self.is_running.read().await
     }
 
+    /// Obtener todos los dispositivos (conectados y descubiertos)
+    pub async fn get_devices(&self) -> Vec<DeviceInfo> {
+        let mut all_devices = Vec::new();
+        
+        // Agregar dispositivos conectados
+        let connected = self.get_connected_devices().await;
+        all_devices.extend(connected);
+        
+        // Agregar dispositivos descubiertos (que no estén ya conectados)
+        let discovered = self.get_discovered_devices().await;
+        let connected_ids: std::collections::HashSet<_> = all_devices.iter().map(|d| d.id.clone()).collect();
+        
+        for device in discovered {
+            if !connected_ids.contains(&device.id) {
+                all_devices.push(device);
+            }
+        }
+        
+        all_devices
+    }
+
     /// Obtener información del sistema
     pub async fn get_system_info(&self) -> SystemInfo {
         let status = self.status.read().await;

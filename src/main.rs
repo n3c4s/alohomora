@@ -151,16 +151,22 @@ fn main() {
             // Iniciar el gestor de extensiones en un hilo separado
             let browser_ext_manager = browser_ext_state.as_mut().unwrap();
             let mut manager_clone = browser_ext_manager.clone();
+            
+            // Crear un runtime de Tokio dedicado para el browser extension manager
             std::thread::spawn(move || {
-                if let Err(e) = tokio::runtime::Runtime::new()
-                    .unwrap()
-                    .block_on(async {
-                        manager_clone.start().await
-                    }) {
-                    error!("❌ Error al iniciar browser extension manager: {}", e);
-                } else {
-                    info!("✅ Browser extension manager iniciado exitosamente");
-                }
+                let rt = tokio::runtime::Runtime::new().unwrap();
+                rt.block_on(async {
+                    info!("🔌 AlohoPass: Iniciando browser extension manager en hilo separado");
+                    if let Err(e) = manager_clone.start().await {
+                        error!("❌ Error al iniciar browser extension manager: {}", e);
+                    } else {
+                        info!("✅ Browser extension manager iniciado exitosamente");
+                        // Mantener el runtime vivo
+                        loop {
+                            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+                        }
+                    }
+                });
             });
 
             info!("=== FIN: Gestor de extensiones del navegador inicializado ===");

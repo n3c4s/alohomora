@@ -1,7 +1,7 @@
 {
   "name": "com.alohopass.browser",
   "description": "AlohoPass Browser Extension Host",
-  "path": "alohopass-native-host",
+  "path": "/Users/charly/alohomora/browser-extension/connect-to-tauri.sh",
   "type": "stdio",
   "allowed_origins": [
     "chrome-extension://*",
