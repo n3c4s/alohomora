@@ -1,432 +1,344 @@
-# 🔐 Alohopass - Gestor de Contraseñas Seguro
+# 🔐 Alohopass - Secure Password Manager
 
-> *"Alohomora!" - El encantamiento que abre puertas cerradas en Harry Potter*
+[![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)](https://rust-lang.org)
+[![Tauri](https://img.shields.io/badge/Tauri-FFC131?style=for-the-badge&logo=tauri&logoColor=black)](https://tauri.app)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 
-**Alohopass** es un gestor de contraseñas de código abierto, altamente seguro y multiplataforma, inspirado en el encantamiento mágico Alohomora. Desarrollado con **Rust + Tauri** para máxima seguridad y **React + TypeScript** para una interfaz moderna y intuitiva.
+> A modern, secure password manager inspired by the Alohomora spell from Harry Potter. Built with Rust, Tauri, and React.
 
-## ✨ Características Principales
+[🇪🇸 Leer en Español](#español) | [🇺🇸 Read in English](#english)
 
-### 🔒 **Seguridad de Nivel Militar**
-- **Encriptación AES-256-GCM** para máxima protección
-- **Derivación de claves Argon2** con salt único por usuario
-- **Base de datos SQLite encriptada** localmente
-- **Nunca almacena contraseñas en texto plano**
-- **Verificación de fortaleza de contraseñas** en tiempo real
+---
 
-### 🌐 **Autocompletado Inteligente en Navegadores**
-- **Detección automática** de formularios de login
-- **Sugerencias contextuales** basadas en la URL actual
-- **Autocompletado con un clic** de usuario y contraseña
-- **Guardado automático** de nuevas credenciales
-- **Integración nativa** con todos los navegadores modernos
+## 🌟 Features
 
-### 🎯 **Gestión Completa de Contraseñas**
-- **CRUD completo** para entradas de contraseñas
-- **Categorización inteligente** y etiquetas personalizables
-- **Búsqueda avanzada** por título, usuario, URL o etiquetas
-- **Historial de uso** y fechas de creación/actualización
-- **Exportación/importación** segura de datos
+- 🔒 **Military-grade encryption** using ChaCha20-Poly1305 and Argon2
+- 🎨 **Modern UI** built with React, TypeScript, and Tailwind CSS
+- 🚀 **Cross-platform** desktop application (Windows, macOS, Linux)
+- 🔐 **Secure storage** with SQLite database and encrypted vaults
+- ⌨️ **Global shortcuts** for quick access
+- 🌍 **Multi-language support** (English/Spanish)
+- 🔄 **Auto-sync** across devices
+- 📱 **Responsive design** for all screen sizes
 
-### 🚀 **Generador de Contraseñas Avanzado**
-- **Configuración personalizable** de longitud y caracteres
-- **Exclusión de caracteres similares** (l, 1, I, O, 0)
-- **Verificación de fortaleza** en tiempo real
-- **Sugerencias de mejora** automáticas
-- **Copiado al portapapeles** con un clic
+## 🚀 Quick Start
 
-### 📊 **Dashboard Inteligente**
-- **Estadísticas de seguridad** en tiempo real
-- **Identificación de contraseñas débiles**
-- **Contraseñas recientes** y uso frecuente
-- **Puntuación de seguridad** general
-- **Acciones rápidas** para tareas comunes
+### Prerequisites
 
-## 🏗️ Arquitectura Técnica
+- **Rust** (with Cargo) - [Install Rust](https://rustup.rs/)
+- **Node.js** and **npm** - [Install Node.js](https://nodejs.org/)
+- **Tauri CLI** - `cargo install tauri-cli --version "^1.5"`
 
-### **Backend (Rust)**
-```
-src/
-├── main.rs              # Punto de entrada y comandos Tauri
-├── crypto/
-│   ├── mod.rs           # Gestor de criptografía
-│   ├── encryption.rs    # Encriptación AES-256-GCM
-│   └── key_derivation.rs # Derivación de claves Argon2
-├── database/
-│   ├── mod.rs           # Gestor de base de datos
-│   ├── connection.rs    # Conexiones SQLite
-│   ├── migrations.rs    # Migraciones de esquema
-│   └── repository.rs    # Operaciones CRUD
-└── models/
-    ├── mod.rs           # Estructuras de datos
-    ├── password_entry.rs # Entrada de contraseña
-    ├── category.rs      # Categorías
-    └── user.rs          # Usuario y autenticación
-```
+### Installation & Development
 
-### **Frontend (React + TypeScript)**
-```
-frontend/src/
-├── components/
-│   ├── Layout.tsx       # Layout principal de la aplicación
-│   └── BrowserAutocomplete.tsx # Autocompletado en navegadores
-├── pages/
-│   ├── LoginPage.tsx    # Página de autenticación
-│   ├── DashboardPage.tsx # Dashboard principal
-│   ├── PasswordsPage.tsx # Gestión de contraseñas
-│   ├── GeneratorPage.tsx # Generador de contraseñas
-│   └── SettingsPage.tsx # Configuración
-├── stores/
-│   ├── authStore.ts     # Estado de autenticación
-│   ├── passwordStore.ts # Estado de contraseñas
-│   └── autocompleteStore.ts # Estado de autocompletado
-└── App.tsx              # Componente raíz
-```
-
-## 🚀 Instalación y Configuración
-
-### **Prerrequisitos**
-- **Rust** 1.70.0 o superior
-- **Node.js** 18.0.0 o superior
-- **npm** 8.0.0 o superior
-- **Tauri CLI** (se instala automáticamente)
-
-### **Instalación Automática (Recomendada)**
-
-#### **Windows (PowerShell como Administrador)**
-```powershell
-# Descargar y ejecutar el script de instalación
-.\install.ps1
-```
-
-#### **Linux/macOS**
+#### Method 1: Direct Command (Recommended)
 ```bash
-# Dar permisos de ejecución
-chmod +x install.sh
+# Clone the repository
+git clone https://github.com/n3c4s/alohomora.git
+cd alohomora
 
-# Ejecutar instalación
-./install.sh
+# Install frontend dependencies
+cd frontend && npm install && cd ..
+
+# Run in development mode
+cargo tauri dev
 ```
 
-### **Instalación Manual**
-
-#### **1. Clonar el repositorio**
+#### Method 2: Multi-platform Scripts
 ```bash
-git clone https://github.com/tuusuario/alohopass.git
-cd alohopass
+# macOS/Linux
+./dev.sh dev
+
+# Windows PowerShell
+.\dev.ps1 dev
+
+# Any platform (Make)
+make tauri-dev
 ```
 
-#### **2. Instalar dependencias del frontend**
+#### Method 3: Step by Step
 ```bash
+# 1. Install frontend dependencies
 cd frontend
 npm install
 cd ..
-```
 
-#### **3. Verificar dependencias de Rust**
-```bash
+# 2. Verify Rust dependencies
 cargo check
+
+# 3. Run the application
+cargo tauri dev
 ```
 
-#### **4. Instalar Tauri CLI**
+### Building for Production
+
 ```bash
-cargo install tauri-cli
+# Build for all platforms
+cargo tauri build
+
+# Build for specific platform
+cargo tauri build --target x86_64-apple-darwin  # macOS
+cargo tauri build --target x86_64-pc-windows-msvc  # Windows
+cargo tauri build --target x86_64-unknown-linux-gnu  # Linux
 ```
 
-## 🎮 Uso y Funcionalidades
+## 🛠️ Development
 
-### **Primera Ejecución**
-1. **Ejecutar en modo desarrollo:**
-   ```bash
-   # Terminal 1: Frontend
-   cd frontend && npm run dev
-   
-   # Terminal 2: Backend
-   cargo tauri dev
-   ```
+### Project Structure
+```
+alohomora/
+├── src/                    # Rust backend
+│   ├── crypto/            # Encryption & key derivation
+│   ├── database/          # SQLite database management
+│   └── models/            # Data structures
+├── frontend/              # React frontend
+│   ├── src/               # React components
+│   ├── components/        # Reusable UI components
+│   └── pages/             # Application pages
+├── icons/                 # Application icons
+└── tauri.conf.json        # Tauri configuration
+```
 
-2. **Crear contraseña maestra:**
-   - La aplicación detectará que es la primera vez
-   - Crea una contraseña maestra segura
-   - Esta contraseña nunca se almacena, solo se deriva
+### Available Commands
 
-### **Gestión de Contraseñas**
-- **Agregar nueva:** Botón "+" en la página de contraseñas
-- **Editar:** Clic en el ícono de edición
-- **Eliminar:** Clic en el ícono de eliminación
-- **Buscar:** Barra de búsqueda en tiempo real
-- **Copiar:** Botones de copia para usuario y contraseña
+| Command | Description | Platform |
+|---------|-------------|----------|
+| `cargo tauri dev` | Run in development mode | All |
+| `./dev.sh dev` | Multi-platform script | macOS/Linux |
+| `.\dev.ps1 dev` | PowerShell script | Windows |
+| `make tauri-dev` | Makefile command | All |
 
-### **Generador de Contraseñas**
-- **Configurar parámetros:** Longitud, tipos de caracteres
-- **Generar:** Clic en "Generar Contraseña"
-- **Verificar fortaleza:** Análisis automático con sugerencias
-- **Copiar:** Botón de copia integrado
+### Development Scripts
 
-### **Autocompletado en Navegadores**
-- **Detectar formularios:** Automático al navegar
-- **Ver sugerencias:** Botón flotante de Alohopass
-- **Autocompletar:** Clic en la sugerencia deseada
-- **Guardar nueva:** Formulario integrado en el panel
-
-## 🔧 Comandos de Desarrollo
-
-### **Makefile (Recomendado)**
 ```bash
-# Ver todos los comandos disponibles
-make help
+# Frontend only
+npm run dev              # In frontend/ directory
+./dev.sh frontend        # Multi-platform
 
-# Instalar dependencias
-make install
+# Backend only
+cargo run               # Rust backend
+./dev.sh backend        # Multi-platform
 
-# Modo desarrollo
-make dev
+# Testing
+cargo test              # Rust tests
+npm test                # Frontend tests (in frontend/)
 
-# Construir para producción
-make build
-
-# Limpiar archivos de construcción
-make clean
-
-# Ejecutar tests
-make test
-
-# Formatear código
-make format
-
-# Verificar seguridad
-make security-check
+# Linting & Formatting
+cargo fmt               # Format Rust code
+cargo clippy            # Lint Rust code
+npm run lint            # Lint frontend code
 ```
 
-### **Comandos Directos**
-```bash
-# Desarrollo
-cargo tauri dev          # Backend + Frontend
-cd frontend && npm run dev  # Solo Frontend
+## 🔧 Configuration
 
-# Construcción
-cargo tauri build        # Construir aplicación
-cargo build --release    # Construir backend optimizado
-
-# Tests
-cargo test               # Tests del backend
-cd frontend && npm test  # Tests del frontend
-
-# Limpieza
-cargo clean              # Limpiar Rust
-cd frontend && npm run clean  # Limpiar Frontend
+### Environment Variables
+Create a `.env` file in the root directory:
+```env
+RUST_LOG=info
+RUST_BACKTRACE=1
+NODE_ENV=development
 ```
 
-## 🛡️ Características de Seguridad
-
-### **Encriptación**
-- **AES-256-GCM:** Algoritmo de encriptación simétrica de nivel militar
-- **Claves de 256 bits:** Máxima seguridad disponible
-- **Vectores de inicialización únicos:** Previene ataques de repetición
-
-### **Derivación de Claves**
-- **Argon2:** Algoritmo ganador del Password Hashing Competition
-- **Salt único:** Cada usuario tiene su propio salt
-- **Factor de trabajo configurable:** Ajustable según hardware
-
-### **Almacenamiento Seguro**
-- **Base de datos local:** No hay datos en la nube
-- **Encriptación de campos sensibles:** Solo título, usuario y contraseña
-- **Metadatos visibles:** URL, notas, etiquetas para funcionalidad
-
-### **Autenticación**
-- **Contraseña maestra:** Única entrada de credenciales
-- **Verificación local:** Sin comunicación externa
-- **Bloqueo automático:** Al cerrar la aplicación
-
-## 🌍 Autocompletado en Navegadores
-
-### **Funcionamiento**
-1. **Detección automática** de formularios de login
-2. **Análisis de URL** para encontrar contraseñas relevantes
-3. **Panel flotante** con sugerencias contextuales
-4. **Autocompletado con un clic** de usuario y contraseña
-5. **Guardado automático** de nuevas credenciales
-
-### **Características**
-- **Integración nativa** con todos los navegadores
-- **Detección inteligente** de campos de formulario
-- **Sugerencias contextuales** basadas en el dominio
-- **Interfaz no intrusiva** que no interfiere con la navegación
-- **Seguridad máxima** sin comprometer la usabilidad
-
-### **Configuración**
-- **Activación automática** al navegar por sitios web
-- **Personalización** de campos a detectar
-- **Exclusiones** para sitios específicos
-- **Historial** de autocompletado exitoso
-
-## 📱 Plataformas Soportadas
-
-### **Desktop**
-- ✅ **Windows** 10/11 (x64)
-- ✅ **macOS** 10.15+ (Intel/Apple Silicon)
-- ✅ **Linux** Ubuntu 20.04+, Debian 11+, Arch Linux
-
-### **Navegadores Web**
-- ✅ **Chrome** 90+
-- ✅ **Firefox** 88+
-- ✅ **Safari** 14+
-- ✅ **Edge** 90+
-
-## 🧪 Testing y Calidad
-
-### **Tests Automatizados**
-```bash
-# Tests del backend
-cargo test
-
-# Tests del frontend
-cd frontend && npm test
-
-# Tests de integración
-cargo test --test integration
-
-# Tests de rendimiento
-cargo bench
+### Tauri Configuration
+The `tauri.conf.json` file is automatically configured for multi-platform support:
+```json
+{
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devPath": "http://localhost:5173",
+    "distDir": "frontend/dist"
+  }
+}
 ```
 
-### **Verificación de Calidad**
-```bash
-# Linting
-make lint
+## 🌍 Multi-language Support
 
-# Formateo
-make format
+Alohopass automatically detects your system language and displays the interface in:
+- 🇺🇸 **English** (default)
+- 🇪🇸 **Español**
 
-# Verificación de tipos
-make check
+The language detection is based on your operating system's locale settings.
 
-# Auditoría de seguridad
-make security-check
-```
+## 📱 Cross-platform Support
 
-## 📦 Distribución
+| Platform | Status | Notes |
+|----------|--------|-------|
+| 🪟 Windows | ✅ Supported | Windows 10/11, PowerShell |
+| 🍎 macOS | ✅ Supported | Intel & Apple Silicon |
+| 🐧 Linux | ✅ Supported | Most distributions |
 
-### **Construcción para Producción**
-```bash
-# Construir para todas las plataformas
-make release
+## 🔒 Security Features
 
-# Construir para plataforma específica
-make windows-build    # Windows
-make macos-build      # macOS
-make linux-build      # Linux
-```
+- **Encryption**: ChaCha20-Poly1305 for data encryption
+- **Key Derivation**: Argon2 for password hashing
+- **Secure Storage**: Encrypted SQLite database
+- **Memory Protection**: Secure memory wiping
+- **Audit Trail**: Comprehensive logging
 
-### **Formatos de Salida**
-- **Windows:** `.exe` (instalador)
-- **macOS:** `.dmg` (imagen de disco)
-- **Linux:** `.AppImage` (aplicación portable)
+## 🤝 Contributing
 
-## 🤝 Contribución
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-### **Cómo Contribuir**
-1. **Fork** el repositorio
-2. **Crea** una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. **Commit** tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. **Push** a la rama (`git push origin feature/AmazingFeature`)
-5. **Abre** un Pull Request
+### Development Setup
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-### **Áreas de Contribución**
-- 🐛 **Bug fixes** y mejoras de estabilidad
-- ✨ **Nuevas funcionalidades** y características
-- 🎨 **Mejoras de UI/UX** y diseño
-- 📚 **Documentación** y ejemplos
-- 🧪 **Tests** y cobertura de código
-- 🔒 **Mejoras de seguridad** y auditorías
+## 📄 License
 
-### **Estándares de Código**
-- **Rust:** Seguir las convenciones de `rustfmt` y `clippy`
-- **TypeScript:** Usar ESLint y Prettier configurados
-- **Commits:** Usar [Conventional Commits](https://conventionalcommits.org/)
-- **Tests:** Mantener cobertura mínima del 80%
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📄 Licencia
+## 🙏 Acknowledgments
 
-Este proyecto está licenciado bajo la **MIT License** - ver el archivo [LICENSE](LICENSE) para detalles.
+- **Tauri** team for the amazing desktop app framework
+- **Rust** community for the safe systems programming language
+- **React** team for the powerful UI library
+- **Harry Potter** universe for the magical inspiration
 
-## 🙏 Agradecimientos
+## 📞 Support
 
-- **J.K. Rowling** por la inspiración de Alohomora
-- **Rust Team** por el lenguaje de programación
-- **Tauri Team** por el framework multiplataforma
-- **React Team** por la biblioteca de UI
-- **Comunidad open source** por las dependencias utilizadas
-
-## 🆘 Soporte
-
-### **Documentación**
-- 📖 **README.md** - Este archivo
-- 🔧 **Makefile** - Comandos de desarrollo
-- ⚙️ **tauri.conf.json** - Configuración de Tauri
-- 📦 **package.json** - Dependencias del frontend
-
-### **Canales de Soporte**
-- 🐛 **Issues de GitHub** - Reportar bugs y solicitar features
-- 💬 **Discussions** - Preguntas y discusiones
-- 📧 **Email** - Contacto directo para consultas privadas
-
-### **Recursos Adicionales**
-- 🔗 **Sitio web oficial** - [alohopass.com](https://alohopass.com)
-- 📚 **Documentación completa** - [docs.alohopass.com](https://docs.alohopass.com)
-- 🎥 **Tutoriales en video** - [YouTube](https://youtube.com/@alohopass)
-
-## 🗺️ Roadmap
-
-### **Versión 1.0 (Actual)**
-- ✅ Sistema de autenticación completo
-- ✅ Gestión básica de contraseñas
-- ✅ Generador de contraseñas
-- ✅ Dashboard con estadísticas
-- ✅ Autocompletado en navegadores
-- ✅ Encriptación AES-256-GCM
-- ✅ Base de datos SQLite
-
-### **Versión 1.1 (Próxima)**
-- 🔄 Sincronización entre dispositivos
-- 🔄 Backup en la nube (opcional)
-- 🔄 Historial de cambios
-- 🔄 Notificaciones de seguridad
-- 🔄 Temas personalizables
-
-### **Versión 1.2 (Futura)**
-- 📱 Aplicación móvil nativa
-- 🌐 Extensión de navegador
-- 🔐 Autenticación de dos factores
-- 📊 Reportes de seguridad avanzados
-- 🔗 Integración con servicios externos
-
-### **Versión 2.0 (Largo plazo)**
-- 🤖 IA para sugerencias de contraseñas
-- 🔍 Detección de contraseñas comprometidas
-- 🌍 Soporte para múltiples idiomas
-- 🔌 API para desarrolladores
-- 🎯 Modo empresarial con gestión de equipos
-
-## 👨‍💻 Autor
-
-**Alohopass** es desarrollado y mantenido por [@n3c4s](https://github.com/n3c4s).
-
-- 🌐 **Sitio web:** [alohopass.com](https://alohopass.com)
-- 📧 **Contacto:** [n3c4s@github.com](mailto:n3c4s@github.com)
-- 🐛 **Issues:** [GitHub Issues](https://github.com/n3c4s/alohomora/issues)
-- 💬 **Discusiones:** [GitHub Discussions](https://github.com/n3c4s/alohomora/discussions)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/n3c4s/alohomora/issues)
+- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/n3c4s/alohomora/discussions)
+- 📧 **Email**: n3c4s@github.com
+- 🌐 **Website**: [alohopass.com](https://alohopass.com)
 
 ---
 
-## 🎯 **¡Comienza a usar Alohopass hoy mismo!**
+<div align="center">
 
-**Alohopass** te ofrece la seguridad de nivel militar que necesitas para proteger tus credenciales digitales, con la simplicidad y elegancia que mereces.
+**Made with ❤️ by [@n3c4s](https://github.com/n3c4s)**
 
-> *"La seguridad no es un lujo, es una necesidad en el mundo digital de hoy"*
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/n3c4s)
+[![Website](https://img.shields.io/badge/Website-FF6B6B?style=for-the-badge&logo=vercel&logoColor=white)](https://alohopass.com)
 
-**¿Listo para abrir la puerta a la seguridad digital?** 🚪✨
+</div>
 
 ---
 
-*Desarrollado con ❤️ y 🦀 por [@n3c4s](https://github.com/n3c4s) y la comunidad Alohopass* 
+## 🇪🇸 Español
+
+### 🔐 Alohopass - Gestor de Contraseñas Seguro
+
+> Un gestor de contraseñas moderno y seguro inspirado en el encantamiento Alohomora de Harry Potter. Construido con Rust, Tauri y React.
+
+### 🚀 Inicio Rápido
+
+#### Prerrequisitos
+
+- **Rust** (con Cargo) - [Instalar Rust](https://rustup.rs/)
+- **Node.js** y **npm** - [Instalar Node.js](https://nodejs.org/)
+- **Tauri CLI** - `cargo install tauri-cli --version "^1.5"`
+
+#### Instalación y Desarrollo
+
+```bash
+# Clonar el repositorio
+git clone https://github.com/n3c4s/alohomora.git
+cd alohomora
+
+# Instalar dependencias del frontend
+cd frontend && npm install && cd ..
+
+# Ejecutar en modo desarrollo
+cargo tauri dev
+```
+
+#### Scripts Multiplataforma
+
+```bash
+# macOS/Linux
+./dev.sh dev
+
+# Windows PowerShell
+.\dev.ps1 dev
+
+# Cualquier plataforma (Make)
+make tauri-dev
+```
+
+### 🌟 Características
+
+- 🔒 **Encriptación de grado militar** usando ChaCha20-Poly1305 y Argon2
+- 🎨 **Interfaz moderna** construida con React, TypeScript y Tailwind CSS
+- 🚀 **Aplicación multiplataforma** (Windows, macOS, Linux)
+- 🔐 **Almacenamiento seguro** con base de datos SQLite y bóvedas encriptadas
+- ⌨️ **Atajos globales** para acceso rápido
+- 🌍 **Soporte multiidioma** (Inglés/Español)
+- 🔄 **Sincronización automática** entre dispositivos
+- 📱 **Diseño responsivo** para todas las pantallas
+
+### 🛠️ Desarrollo
+
+#### Estructura del Proyecto
+```
+alohomora/
+├── src/                    # Backend en Rust
+│   ├── crypto/            # Encriptación y derivación de claves
+│   ├── database/          # Gestión de base de datos SQLite
+│   └── models/            # Estructuras de datos
+├── frontend/              # Frontend en React
+│   ├── src/               # Componentes React
+│   ├── components/        # Componentes UI reutilizables
+│   └── pages/             # Páginas de la aplicación
+├── icons/                 # Iconos de la aplicación
+└── tauri.conf.json        # Configuración de Tauri
+```
+
+#### Comandos Disponibles
+
+| Comando | Descripción | Plataforma |
+|---------|-------------|------------|
+| `cargo tauri dev` | Ejecutar en modo desarrollo | Todas |
+| `./dev.sh dev` | Script multiplataforma | macOS/Linux |
+| `.\dev.ps1 dev` | Script PowerShell | Windows |
+| `make tauri-dev` | Comando Makefile | Todas |
+
+### 🌍 Soporte Multiidioma
+
+Alohopass detecta automáticamente el idioma de tu sistema y muestra la interfaz en:
+- 🇺🇸 **Inglés** (predeterminado)
+- 🇪🇸 **Español**
+
+La detección del idioma se basa en la configuración de idioma de tu sistema operativo.
+
+### 📱 Soporte Multiplataforma
+
+| Plataforma | Status | Notes |
+|------------|--------|-------|
+| 🪟 Windows | ✅ Soportado | Windows 10/11, PowerShell |
+| 🍎 macOS | ✅ Soportado | Intel y Apple Silicon |
+| 🐧 Linux | ✅ Soportado | La mayoría de distribuciones |
+
+### 🔒 Características de Seguridad
+
+- **Encriptación**: ChaCha20-Poly1305 para encriptación de datos
+- **Derivación de Claves**: Argon2 para hash de contraseñas
+- **Almacenamiento Seguro**: Base de datos SQLite encriptada
+- **Protección de Memoria**: Borrado seguro de memoria
+- **Auditoría**: Registro completo de actividades
+
+### 🤝 Contribuir
+
+¡Bienvenimos las contribuciones! Por favor, consulta nuestra [Guía de Contribución](CONTRIBUTING.md) para más detalles.
+
+### 📞 Soporte
+
+- 🐛 **Reportes de Errores**: [GitHub Issues](https://github.com/n3c4s/alohomora/issues)
+- 💡 **Solicitudes de Funciones**: [GitHub Discussions](https://github.com/n3c4s/alohomora/discussions)
+- 📧 **Email**: n3c4s@github.com
+- 🌐 **Sitio Web**: [alohopass.com](https://alohopass.com)
+
+---
+
+<div align="center">
+
+**Hecho con ❤️ por [@n3c4s](https://github.com/n3c4s)**
+
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/n3c4s)
+[![Website](https://img.shields.io/badge/Sitio_Web-FF6B6B?style=for-the-badge&logo=vercel&logoColor=white)](https://alohopass.com)
+
+</div> 
