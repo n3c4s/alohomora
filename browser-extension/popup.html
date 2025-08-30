@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlohoPass</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 350px;
+            min-height: 400px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .status {
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .status.connected {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status.disconnected {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-icon {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .status-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .actions {
+            padding: 0 20px 20px;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .action-btn.primary {
+            background: #10b981;
+        }
+
+        .action-btn.primary:hover {
+            background: #059669;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .stats {
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 0 15px 15px;
+            border-radius: 8px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .footer {
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 12px;
+            opacity: 0.6;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">🔐 AlohoPass</div>
+        <div class="subtitle">Gestor de contraseñas seguro</div>
+    </div>
+
+    <div class="status" id="status">
+        <div class="status-icon" id="statusIcon">⏳</div>
+        <div class="status-text" id="statusText">Verificando conexión...</div>
+    </div>
+
+    <div class="stats" id="stats" style="display: none;">
+        <div class="stat-item">
+            <span class="stat-label">Contraseñas totales:</span>
+            <span class="stat-value" id="totalPasswords">-</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Última sincronización:</span>
+            <span class="stat-value" id="lastSync">-</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Dispositivos conectados:</span>
+            <span class="stat-value" id="connectedDevices">-</span>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="action-btn primary" id="openApp">
+            🖥️ Abrir AlohoPass
+        </button>
+        
+        <button class="action-btn" id="syncNow">
+            🔄 Sincronizar ahora
+        </button>
+        
+        <button class="action-btn" id="searchPasswords">
+            🔍 Buscar contraseñas
+        </button>
+        
+        <button class="action-btn" id="settings">
+            ⚙️ Configuración
+        </button>
+    </div>
+
+    <div class="footer">
+        Versión 1.0.0 • AlohoPass
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

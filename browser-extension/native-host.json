@@ -1,0 +1,10 @@
+{
+  "name": "com.alohopass.browser",
+  "description": "AlohoPass Browser Extension Host",
+  "path": "alohopass-native-host",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://*",
+    "moz-extension://*"
+  ]
+}

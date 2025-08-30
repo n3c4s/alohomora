@@ -8,6 +8,7 @@ mod crypto;
 mod database;
 mod models;
 mod sync;
+mod browser_extension;
 
 use tauri::Manager;
 use std::sync::Mutex;
@@ -41,6 +42,7 @@ struct AppState {
     database_manager: Mutex<Option<database::DatabaseManager>>,
     is_initialized: Mutex<bool>,
     sync_manager: Mutex<Option<sync::SyncManager>>,
+    browser_extension_manager: Mutex<Option<browser_extension::BrowserExtensionManager>>,
 }
 
 impl Default for AppState {
@@ -50,6 +52,7 @@ impl Default for AppState {
             database_manager: Mutex::new(None),
             is_initialized: Mutex::new(false),
             sync_manager: Mutex::new(None),
+            browser_extension_manager: Mutex::new(None),
         }
     }
 }
@@ -98,35 +101,62 @@ fn main() {
             app_handle.emit_all("app-ready", ()).unwrap();
             
             // Inicializar el gestor de sincronización
-            info!("Inicializando gestor de sincronización...");
+            info!("=== INICIO: Inicializando gestor de sincronización ===");
             let sync_manager = sync::SyncManager::new_default();
-            info!("SyncManager creado exitosamente");
+            info!("✅ SyncManager creado exitosamente");
             
             let state = app.state::<AppState>();
-            info!("Estado de la aplicación obtenido");
+            info!("✅ Estado de la aplicación obtenido");
             
             let mut sync_state = state.sync_manager.lock()
                 .map_err(|e| {
-                    error!("Error al acceder al sync manager: {:?}", e);
+                    error!("❌ Error al acceder al sync manager: {:?}", e);
                     "Error al acceder al sync manager"
                 })?;
-            info!("Lock del sync manager obtenido");
+            info!("✅ Lock del sync manager obtenido");
             
             *sync_state = Some(sync_manager);
-            info!("Sync manager inicializado exitosamente en el estado");
+            info!("✅ Sync manager guardado en el estado");
             
             // Verificar que se guardó correctamente
             drop(sync_state);
             let sync_state_check = state.sync_manager.lock()
                 .map_err(|e| {
-                    error!("Error al verificar sync manager: {:?}", e);
+                    error!("❌ Error al verificar sync manager: {:?}", e);
                     "Error al verificar sync manager"
                 })?;
             if sync_state_check.is_some() {
-                info!("✅ SyncManager verificado en el estado");
+                info!("✅ SyncManager verificado en el estado - INICIALIZACIÓN COMPLETA");
             } else {
-                error!("❌ SyncManager NO está en el estado");
+                error!("❌ SyncManager NO está en el estado - INICIALIZACIÓN FALLIDA");
+                return Err("SyncManager no se pudo inicializar".into());
             }
+            
+            info!("=== FIN: Gestor de sincronización inicializado ===");
+            
+            // Inicializar el gestor de extensiones del navegador
+            info!("=== INICIO: Inicializando gestor de extensiones del navegador ===");
+            let browser_extension_manager = browser_extension::BrowserExtensionManager::new(
+                state.sync_manager.clone()
+            );
+            let mut browser_ext_state = state.browser_extension_manager.lock()
+                .map_err(|e| {
+                    error!("❌ Error al acceder al browser extension manager: {:?}", e);
+                    "Error al acceder al browser extension manager"
+                })?;
+            *browser_ext_state = Some(browser_extension_manager);
+            info!("✅ Browser extension manager inicializado exitosamente");
+            
+            // Iniciar el gestor de extensiones
+            if let Some(manager) = browser_ext_state.as_mut() {
+                if let Err(e) = manager.start().await {
+                    error!("❌ Error al iniciar browser extension manager: {}", e);
+                } else {
+                    info!("✅ Browser extension manager iniciado exitosamente");
+                }
+            }
+            
+            info!("=== FIN: Gestor de extensiones del navegador inicializado ===");
             
             Ok(())
         })

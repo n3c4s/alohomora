@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 AlohoPass - Página de Prueba</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        
+        .form-section h2 {
+            color: #374151;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #5a67d8;
+        }
+        
+        .alohopass-indicator {
+            background: #10b981;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        
+        .info-box {
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-box h3 {
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+        
+        .info-box p {
+            color: #1e3a8a;
+            margin: 0;
+        }
+        
+        .test-results {
+            background: #f3f4f6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .test-results h3 {
+            color: #374151;
+            margin-bottom: 15px;
+        }
+        
+        .test-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .test-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 AlohoPass - Página de Prueba</h1>
+        
+        <div class="info-box">
+            <h3>📋 Instrucciones de Prueba</h3>
+            <p>Esta página contiene formularios de login y signup para probar el plugin de AlohoPass. 
+            Asegúrate de tener la extensión instalada y la aplicación Tauri ejecutándose.</p>
+        </div>
+        
+        <!-- Formulario de Login -->
+        <div class="form-section">
+            <h2>
+                🔑 Iniciar Sesión
+                <span class="alohopass-indicator">🔐 AlohoPass</span>
+            </h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Correo electrónico:</label>
+                    <input type="email" id="loginEmail" name="email" placeholder="tu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Contraseña:</label>
+                    <input type="password" id="loginPassword" name="password" placeholder="Tu contraseña" required>
+                </div>
+                <button type="submit">Iniciar Sesión</button>
+            </form>
+        </div>
+        
+        <!-- Formulario de Registro -->
+        <div class="form-section">
+            <h2>
+                ✨ Crear Cuenta
+                <span class="alohopass-indicator">🔐 AlohoPass</span>
+            </h2>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="signupName">Nombre completo:</label>
+                    <input type="text" id="signupName" name="name" placeholder="Tu nombre completo" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupEmail">Correo electrónico:</label>
+                    <input type="email" id="signupEmail" name="email" placeholder="tu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Contraseña:</label>
+                    <input type="password" id="signupPassword" name="password" placeholder="Elige una contraseña segura" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupConfirmPassword">Confirmar contraseña:</label>
+                    <input type="password" id="signupConfirmPassword" name="confirmPassword" placeholder="Repite tu contraseña" required>
+                </div>
+                <button type="submit">Crear Cuenta</button>
+            </form>
+        </div>
+        
+        <!-- Resultados de las pruebas -->
+        <div class="test-results">
+            <h3>🧪 Resultados de las Pruebas</h3>
+            <div id="testResults">
+                <div class="test-item">
+                    <span>Plugin detectado:</span>
+                    <span class="status pending" id="pluginDetected">Pendiente</span>
+                </div>
+                <div class="test-item">
+                    <span>Formularios detectados:</span>
+                    <span class="status pending" id="formsDetected">Pendiente</span>
+                </div>
+                <div class="test-item">
+                    <span>Conexión con Tauri:</span>
+                    <span class="status pending" id="tauriConnection">Pendiente</span>
+                </div>
+                <div class="test-item">
+                    <span>Autofill funcionando:</span>
+                    <span class="status pending" id="autofillWorking">Pendiente</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Script para probar el plugin
+        console.log('🔐 AlohoPass: Página de prueba cargada');
+        
+        // Verificar si el plugin está instalado
+        function checkPlugin() {
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                console.log('✅ Plugin detectado');
+                document.getElementById('pluginDetected').textContent = '✅ Detectado';
+                document.getElementById('pluginDetected').className = 'status success';
+                
+                // Verificar formularios detectados
+                setTimeout(() => {
+                    const forms = document.querySelectorAll('form');
+                    if (forms.length > 0) {
+                        document.getElementById('formsDetected').textContent = `✅ ${forms.length} formularios`;
+                        document.getElementById('formsDetected').className = 'status success';
+                    }
+                }, 1000);
+                
+                // Verificar conexión con Tauri
+                chrome.runtime.sendMessage({ action: 'checkConnection' }, (response) => {
+                    if (response && response.connected) {
+                        document.getElementById('tauriConnection').textContent = '✅ Conectado';
+                        document.getElementById('tauriConnection').className = 'status success';
+                    } else {
+                        document.getElementById('tauriConnection').textContent = '❌ No conectado';
+                        document.getElementById('tauriConnection').className = 'status error';
+                    }
+                });
+                
+            } else {
+                console.log('❌ Plugin no detectado');
+                document.getElementById('pluginDetected').textContent = '❌ No detectado';
+                document.getElementById('pluginDetected').className = 'status error';
+            }
+        }
+        
+        // Manejar envío de formularios
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('🔐 AlohoPass: Formulario de login enviado');
+            testAutofill();
+        });
+        
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('🔐 AlohoPass: Formulario de signup enviado');
+            testAutofill();
+        });
+        
+        // Probar autofill
+        function testAutofill() {
+            const emailInputs = document.querySelectorAll('input[type="email"]');
+            const passwordInputs = document.querySelectorAll('input[type="password"]');
+            
+            if (emailInputs.length > 0 || passwordInputs.length > 0) {
+                document.getElementById('autofillWorking').textContent = '✅ Funcionando';
+                document.getElementById('autofillWorking').className = 'status success';
+            } else {
+                document.getElementById('autofillWorking').textContent = '❌ No funcionando';
+                document.getElementById('autofillWorking').className = 'status error';
+            }
+        }
+        
+        // Inicializar pruebas
+        window.addEventListener('load', function() {
+            setTimeout(checkPlugin, 500);
+        });
+        
+        // Escuchar mensajes del plugin
+        if (typeof chrome !== 'undefined' && chrome.runtime) {
+            chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+                console.log('🔐 AlohoPass: Mensaje recibido del plugin:', message);
+                
+                if (message.action === 'passwordsUpdated') {
+                    console.log('🔐 AlohoPass: Contraseñas actualizadas');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
