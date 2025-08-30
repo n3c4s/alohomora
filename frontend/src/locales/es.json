@@ -169,5 +169,76 @@
     "recoveryKeyGenerated": "Clave de recuperación generada exitosamente",
     "saveRecoveryKey": "Por favor guarda esta clave de recuperación en un lugar seguro. No podrás verla de nuevo.",
     "recoveryKeyWarning": "Advertencia: Si pierdes tu clave de recuperación, no podrás acceder a tus contraseñas."
+  },
+  "sync": {
+    "title": "Sincronización",
+    "subtitle": "Gestiona la sincronización automática de contraseñas entre dispositivos",
+    "status": {
+      "title": "Estado de Sincronización",
+      "active": "Activa",
+      "inactive": "Inactiva",
+      "enable": "Activar",
+      "disable": "Desactivar",
+      "syncNow": "Sincronizar Ahora"
+    },
+    "tabs": {
+      "overview": "Resumen",
+      "devices": "Dispositivos",
+      "settings": "Configuración"
+    },
+    "overview": {
+      "connectedDevices": "Dispositivos Conectados",
+      "lastSync": "Última Sincronización",
+      "syncMethod": "Método de Sincronización",
+      "syncInterval": "Intervalo de Sincronización",
+      "totalSyncs": "Total de Sincronizaciones",
+      "successful": "exitosas",
+      "failed": "fallidas",
+      "dataSynced": "Datos Sincronizados",
+      "totalAccumulated": "Total acumulado",
+      "lastDuration": "Última Duración",
+      "syncTime": "Tiempo de sincronización",
+      "recentActivity": "Actividad Reciente",
+      "systemWorking": "Sistema de sincronización funcionando correctamente.",
+      "autoSyncEnabled": "Sincronización automática activada.",
+      "manualSync": "Sincronización manual."
+    },
+    "devices": {
+      "discoveredDevices": "Dispositivos Descubiertos",
+      "searchDevices": "Buscar Dispositivos",
+      "noDevices": "No se han descubierto dispositivos",
+      "searchNetwork": "Buscar dispositivos en la red",
+      "trusted": "Confiable",
+      "unverified": "No Verificado",
+      "verify": "Verificar",
+      "remove": "Eliminar"
+    },
+    "settings": {
+      "title": "Configuración de Sincronización",
+      "general": "Configuración General",
+      "advanced": "Configuración Avanzada",
+      "autoDiscovery": "Descubrimiento Automático",
+      "autoDiscoveryDesc": "Buscar dispositivos automáticamente en la red",
+      "autoSync": "Sincronización Automática",
+      "autoSyncDesc": "Sincronizar automáticamente cuando se detecten cambios",
+      "syncInterval": "Intervalo de Sincronización (minutos)",
+      "encryptionLevel": "Nivel de Encriptación",
+      "maxDevices": "Máximo de Dispositivos",
+      "allowedNetworks": "Redes Permitidas",
+      "addNetwork": "+ Agregar Red",
+      "saveConfig": "Guardar Configuración",
+      "encryptionLevels": {
+        "basic": "Básico (AES-128)",
+        "standard": "Estándar (AES-256)",
+        "military": "Militar (AES-256 + ChaCha20)"
+      },
+      "intervals": {
+        "1min": "1 minuto",
+        "5min": "5 minutos",
+        "15min": "15 minutos",
+        "30min": "30 minutos",
+        "1hour": "1 hora"
+      }
+    }
   }
 }

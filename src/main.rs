@@ -7,6 +7,7 @@
 mod crypto;
 mod database;
 mod models;
+mod sync;
 
 use tauri::Manager;
 use std::sync::Mutex;
@@ -38,6 +39,7 @@ struct AppState {
     crypto_manager: Mutex<crypto::CryptoManager>,
     database_manager: Mutex<Option<database::DatabaseManager>>,
     is_initialized: Mutex<bool>,
+    sync_manager: Mutex<Option<sync::SyncManager>>,
 }
 
 impl Default for AppState {
@@ -46,6 +48,7 @@ impl Default for AppState {
             crypto_manager: Mutex::new(crypto::CryptoManager::new()),
             database_manager: Mutex::new(None),
             is_initialized: Mutex::new(false),
+            sync_manager: Mutex::new(None),
         }
     }
 }

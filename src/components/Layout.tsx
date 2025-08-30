@@ -11,9 +11,11 @@ import {
   Shield,
   Plus,
   Search,
-  User
+  User,
+  RefreshCw
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import SyncStatusIndicator from './SyncStatusIndicator'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -49,6 +51,7 @@ const Layout = ({ children }: LayoutProps) => {
     { name: 'Dashboard', href: '/', icon: Shield },
     { name: 'Contraseñas', href: '/passwords', icon: Lock },
     { name: 'Generador', href: '/generator', icon: Key },
+    { name: 'Sincronización', href: '/sync', icon: RefreshCw },
     { name: 'Configuración', href: '/settings', icon: Settings },
   ]
 
@@ -131,6 +134,9 @@ const Layout = ({ children }: LayoutProps) => {
             </button>
             
             <div className="flex items-center space-x-4">
+              {/* Indicador de estado de sincronización */}
+              <SyncStatusIndicator />
+              
               {/* Barra de búsqueda */}
               <div className="relative hidden md:block">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />

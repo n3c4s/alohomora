@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage'
 import PasswordsPage from './pages/PasswordsPage'
 import GeneratorPage from './pages/GeneratorPage'
 import SettingsPage from './pages/SettingsPage'
+import SyncPage from './pages/SyncPage'
 import { listen } from '@tauri-apps/api/event'
 
 function App() {
@@ -50,6 +51,7 @@ function App() {
         <Route path="/" element={<DashboardPage />} />
         <Route path="/passwords" element={<PasswordsPage />} />
         <Route path="/generator" element={<GeneratorPage />} />
+        <Route path="/sync" element={<SyncPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Routes>
     </Layout>

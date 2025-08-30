@@ -169,5 +169,76 @@
     "recoveryKeyGenerated": "Recovery key generated successfully",
     "saveRecoveryKey": "Please save this recovery key in a secure location. You won't be able to see it again.",
     "recoveryKeyWarning": "Warning: If you lose your recovery key, you will not be able to access your passwords."
+  },
+  "sync": {
+    "title": "Synchronization",
+    "subtitle": "Manage automatic password synchronization between devices",
+    "status": {
+      "title": "Synchronization Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "enable": "Enable",
+      "disable": "Disable",
+      "syncNow": "Sync Now"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "devices": "Devices",
+      "settings": "Settings"
+    },
+    "overview": {
+      "connectedDevices": "Connected Devices",
+      "lastSync": "Last Synchronization",
+      "syncMethod": "Sync Method",
+      "syncInterval": "Sync Interval",
+      "totalSyncs": "Total Synchronizations",
+      "successful": "successful",
+      "failed": "failed",
+      "dataSynced": "Data Synced",
+      "totalAccumulated": "Total accumulated",
+      "lastDuration": "Last Duration",
+      "syncTime": "Synchronization time",
+      "recentActivity": "Recent Activity",
+      "systemWorking": "Synchronization system working correctly.",
+      "autoSyncEnabled": "Automatic synchronization enabled.",
+      "manualSync": "Manual synchronization."
+    },
+    "devices": {
+      "discoveredDevices": "Discovered Devices",
+      "searchDevices": "Search Devices",
+      "noDevices": "No devices discovered",
+      "searchNetwork": "Search devices on network",
+      "trusted": "Trusted",
+      "unverified": "Unverified",
+      "verify": "Verify",
+      "remove": "Remove"
+    },
+    "settings": {
+      "title": "Synchronization Settings",
+      "general": "General Settings",
+      "advanced": "Advanced Settings",
+      "autoDiscovery": "Auto Discovery",
+      "autoDiscoveryDesc": "Automatically search for devices on the network",
+      "autoSync": "Auto Sync",
+      "autoSyncDesc": "Automatically sync when changes are detected",
+      "syncInterval": "Sync Interval (minutes)",
+      "encryptionLevel": "Encryption Level",
+      "maxDevices": "Maximum Devices",
+      "allowedNetworks": "Allowed Networks",
+      "addNetwork": "+ Add Network",
+      "saveConfig": "Save Configuration",
+      "encryptionLevels": {
+        "basic": "Basic (AES-128)",
+        "standard": "Standard (AES-256)",
+        "military": "Military (AES-256 + ChaCha20)"
+      },
+      "intervals": {
+        "1min": "1 minute",
+        "5min": "5 minutes",
+        "15min": "15 minutes",
+        "30min": "30 minutes",
+        "1hour": "1 hour"
+      }
+    }
   }
 }
